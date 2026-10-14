@@ -1,69 +1,19 @@
 /*
-  Design tokens: modo escuro, neutro, com um único acento.
-  Inspiração: referência Dylan Brouwer (tipografia monumental, monocromático)
-  + alegria e movimento do portrait.so.
+  Design tokens (cores, tipografia, espaçamentos).
+  Valores provisórios: vão ser definidos na fase do style guide.
 */
 :root {
-  color-scheme: dark;
+  --color-bg: #ffffff;
+  --color-text: #111111;
+  --color-muted: #666666;
+  --color-accent: #0055ff;
 
-  /* Cores */
-  --color-bg: #0e0e0e;
-  --color-surface: #161616;
-  --color-surface-2: #1e1e1f;
-  --color-surface-3: #2a292b;
-  --color-line: rgb(241 241 241 / 0.12);
-  --color-line-strong: rgb(241 241 241 / 0.24);
-  --color-text: #f1f1f1;
-  --color-text-2: #a2a2a2;
-  --color-muted: #7b7a7c;
-  --color-accent: #ff6436; /* só para pontos, estados e pequenos detalhes */
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
-  /* Gradiente do título: letras a "sair" da escuridão */
-  --gradient-display: linear-gradient(180deg, #f1f1f1 0%, #dcd6d6 30%, #b9b7bb 55%, #6e6c70 80%, #3c3a3e 100%);
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-4: 1rem;
+  --space-8: 2rem;
 
-  /* Tipografia */
-  --font-display: 'Anton', 'Bebas Neue', Impact, sans-serif;
-  --font-sans: 'Inter Tight Variable', 'Inter Tight', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
-
-  --text-micro: 0.75rem; /* 12px */
-  --text-caption: 0.875rem; /* 14px */
-  --text-body-sm: 1.0625rem; /* 17px */
-  --text-body: clamp(1.125rem, 1rem + 0.4vw, 1.3125rem); /* 18–21px */
-  --text-heading-sm: clamp(1.75rem, 1.4rem + 1.2vw, 2.25rem); /* 28–36px */
-  --text-heading: clamp(2.5rem, 1.8rem + 2.6vw, 3.75rem); /* 40–60px */
-  --text-heading-lg: clamp(4rem, 2rem + 8vw, 8rem);
-  --text-display: clamp(5.5rem, 1rem + 21vw, 22rem);
-
-  --leading-tight: 0.82;
-  --leading-snug: 1.1;
-  --leading-body: 1.35;
-
-  --tracking-display: -0.01em;
-  --tracking-heading: -0.03em;
-  --tracking-body: -0.01em;
-
-  /* Espaçamento: base 6px */
-  --space-6: 0.375rem;
-  --space-12: 0.75rem;
-  --space-18: 1.125rem;
-  --space-24: 1.5rem;
-  --space-48: 3rem;
-  --space-72: 4.5rem;
-  --space-96: 6rem;
-  --space-120: 7.5rem;
-
-  --gutter: clamp(1rem, 0.5rem + 2vw, 2rem);
-  --max-width: 90rem;
-
-  /* Formas */
-  --radius-pill: 9999px;
-  --radius-panel: 0.9rem;
-
-  /* Movimento: pesado e intencional, sem molas */
-  --ease-out: cubic-bezier(0.32, 0.72, 0, 1);
-  --ease-expo: cubic-bezier(0.19, 1, 0.22, 1);
-  --dur-micro: 0.3s;
-  --dur-component: 0.5s;
-  --dur-page: 0.75s;
+  --max-width: 72rem;
 }
