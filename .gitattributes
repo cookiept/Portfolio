@@ -1,0 +1,12 @@
+# Finais de linha consistentes entre Windows e macOS/Linux
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.avif binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.pdf binary
