@@ -1,0 +1,84 @@
+---
+import { site } from '@data/site';
+import { withBase } from '../utils/url';
+---
+
+<header class="nav container">
+  <a class="nav__logo mono" href={withBase('/')} aria-label={`${site.name}, home`}>
+    <span class="dot"></span>{site.name}
+  </a>
+  <nav aria-label="Main">
+    <ul class="nav__list">
+      <li><a class="pill mono" href={withBase('/#work')}>+ Work</a></li>
+      <li><a class="pill mono" href={withBase('/#contact')}>+ Contact</a></li>
+      {
+        site.available && (
+          <li class="nav__status">
+            <span class="pill pill--status mono">
+              <span class="dot dot--pulse" />
+              Available for freelance
+            </span>
+          </li>
+        )
+      }
+    </ul>
+  </nav>
+</header>
+
+<style>
+  .nav {
+    position: absolute;
+    inset: 0 0 auto;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-12);
+    padding-block: var(--space-18);
+  }
+
+  .nav__logo {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-6);
+  }
+
+  .nav__list {
+    display: flex;
+    gap: var(--space-6);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-6);
+    padding: 0.45rem 0.8rem;
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--radius-pill);
+    color: var(--color-text);
+    backdrop-filter: blur(5px);
+    transition:
+      background-color var(--dur-micro) var(--ease-out),
+      color var(--dur-micro) var(--ease-out),
+      border-color var(--dur-micro) var(--ease-out);
+  }
+
+  a.pill:hover {
+    background: var(--color-text);
+    border-color: var(--color-text);
+    color: var(--color-bg);
+  }
+
+  .pill--status {
+    color: var(--color-text-2);
+  }
+
+  @media (max-width: 40rem) {
+    .nav__status {
+      display: none;
+    }
+  }
+</style>

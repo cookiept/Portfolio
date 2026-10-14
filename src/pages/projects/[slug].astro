@@ -1,0 +1,120 @@
+---
+// Página de cada projeto. Versão provisória: o layout final do case study
+// vem na próxima fase, depois de fecharmos a landing page.
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '@layouts/BaseLayout.astro';
+import Nav from '@components/Nav.astro';
+import Footer from '@components/Footer.astro';
+import { site } from '@data/site';
+import { withBase } from '../../utils/url';
+
+export async function getStaticPaths() {
+  const projects = await getCollection('projects', ({ data }) => !data.placeholder);
+  return projects.map((project) => ({ params: { slug: project.id }, props: { project } }));
+}
+
+const { project } = Astro.props;
+const { title, tagline, type, year, tags } = project.data;
+const { Content } = await render(project);
+---
+
+<BaseLayout title={`${title} — ${site.name}`} description={tagline}>
+  <Nav />
+  <main class="project container">
+    <a class="project__back mono" href={withBase('/#work')}>← All work</a>
+    <h1 class="project__title">{title}</h1>
+    <div class="project__meta">
+      <p class="project__tagline">{tagline}</p>
+      <ul class="project__facts mono">
+        <li>{type}</li>
+        <li>{year}</li>
+        {tags.filter((t) => t !== type).map((t) => <li>{t}</li>)}
+      </ul>
+    </div>
+    <div class="project__body">
+      <Content />
+      <p class="project__soon mono"><span class="dot dot--pulse"></span> Full case study coming soon</p>
+    </div>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+  .project {
+    padding-block: var(--space-120) var(--space-96);
+  }
+
+  .project__back {
+    display: inline-block;
+    color: var(--color-text-2);
+    margin-bottom: var(--space-48);
+  }
+
+  .project__back:hover {
+    color: var(--color-text);
+  }
+
+  .project__title {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: var(--text-heading-lg);
+    line-height: var(--leading-tight);
+    text-transform: uppercase;
+    background: var(--gradient-display);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    padding-top: 0.06em;
+  }
+
+  .project__meta {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-24);
+    padding-top: var(--space-18);
+    margin-top: var(--space-24);
+    border-top: 1px solid var(--color-line);
+  }
+
+  .project__tagline {
+    max-width: 32ch;
+    font-size: var(--text-heading-sm);
+    line-height: var(--leading-snug);
+    letter-spacing: var(--tracking-heading);
+  }
+
+  .project__facts {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    text-align: right;
+    color: var(--color-text-2);
+    display: grid;
+    gap: var(--space-6);
+  }
+
+  .project__body {
+    max-width: 60ch;
+    margin-top: var(--space-96);
+    color: var(--color-text-2);
+    display: grid;
+    gap: var(--space-24);
+  }
+
+  .project__soon {
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+    color: var(--color-text);
+  }
+
+  @media (max-width: 40rem) {
+    .project__meta {
+      grid-template-columns: 1fr;
+    }
+
+    .project__facts {
+      text-align: left;
+    }
+  }
+</style>
