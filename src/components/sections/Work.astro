@@ -1,0 +1,86 @@
+---
+import { getCollection } from 'astro:content';
+import ProjectCard from '@components/ui/ProjectCard.astro';
+
+const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
+---
+
+<section id="work" class="work container" aria-labelledby="work-title">
+  <header class="work__head" data-reveal>
+    <h2 id="work-title" class="work__title">Things I’ve made</h2>
+    <p class="work__lede">Apps, prototypes and one website.</p>
+  </header>
+
+  <div class="work__grid">
+    {projects.map((project, index) => <ProjectCard project={project} index={index} />)}
+  </div>
+</section>
+
+<style>
+  .work {
+    padding-block: var(--space-24);
+    display: grid;
+    gap: var(--space-12);
+  }
+
+  .work__head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--space-3) var(--space-6);
+  }
+
+  .work__title {
+    font-size: var(--text-h2);
+  }
+
+  .work__lede {
+    color: var(--color-text-2);
+  }
+
+  /* Bento: tamanhos diferentes em vez de uma grelha de quadrados iguais */
+  .work__grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: var(--space-6);
+  }
+
+  .work__grid > :global(.project) {
+    grid-column: span 3;
+  }
+
+  .work__grid > :global(.project--1),
+  .work__grid > :global(.project--4) {
+    grid-column: span 4;
+  }
+
+  .work__grid > :global(.project--2),
+  .work__grid > :global(.project--3) {
+    grid-column: span 2;
+  }
+
+  @media (max-width: 60rem) {
+    .work__grid > :global(.project),
+    .work__grid > :global(.project--1),
+    .work__grid > :global(.project--2),
+    .work__grid > :global(.project--3),
+    .work__grid > :global(.project--4) {
+      grid-column: span 3;
+    }
+  }
+
+  @media (max-width: 40rem) {
+    .work__grid {
+      grid-template-columns: 1fr;
+    }
+
+    .work__grid > :global(.project),
+    .work__grid > :global(.project--1),
+    .work__grid > :global(.project--2),
+    .work__grid > :global(.project--3),
+    .work__grid > :global(.project--4) {
+      grid-column: auto;
+    }
+  }
+</style>

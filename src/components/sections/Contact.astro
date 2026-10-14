@@ -1,0 +1,64 @@
+---
+import SpecularButton from '@components/effects/Specular/SpecularButton.jsx';
+import { site } from '@data/site';
+import { withBase } from '../../utils/url';
+
+const { instagram, email, cv } = site.links;
+---
+
+<section id="contact" class="contact container" aria-labelledby="contact-title" data-buddy-zone="contact">
+  <h2 id="contact-title" class="contact__title" data-reveal>
+    Like what you see? <span class="accent">Say hi.</span>
+  </h2>
+
+  <div class="contact__actions" data-reveal style="--reveal-delay:0.12s">
+    <SpecularButton client:visible href={instagram.url} target="_blank" rel="noopener noreferrer" size="lg" radius={999} lineColor="#a9c8ff" baseColor="#4a5468">
+      Message me on Instagram ↗
+    </SpecularButton>
+    <ul class="contact__meta">
+      <li>Instagram <span>{instagram.handle}</span></li>
+      <li>Email <span>{email ?? 'coming soon'}</span></li>
+      <li>
+        Résumé
+        {cv ? <a href={withBase('/cv.pdf')} download>download PDF</a> : <span>coming soon</span>}
+      </li>
+    </ul>
+  </div>
+</section>
+
+<style>
+  .contact {
+    display: grid;
+    gap: var(--space-8);
+    padding-block: var(--space-24);
+    border-top: 1px solid var(--color-line);
+  }
+
+  .contact__title {
+    max-width: 16ch;
+    font-size: var(--text-h2);
+  }
+
+  .contact__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-6) var(--space-12);
+  }
+
+  .contact__meta {
+    display: grid;
+    gap: var(--space-1);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--color-muted);
+    font-size: var(--text-sm);
+  }
+
+  .contact__meta span,
+  .contact__meta a {
+    color: var(--color-text-2);
+    margin-left: var(--space-2);
+  }
+</style>

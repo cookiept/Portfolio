@@ -1,0 +1,80 @@
+---
+// Página de cada projeto. Versão provisória: o case study completo
+// vem na próxima fase, depois de fecharmos a landing page.
+import { getCollection, render } from 'astro:content';
+import { Image } from 'astro:assets';
+import BaseLayout from '@layouts/BaseLayout.astro';
+import Nav from '@components/ui/Nav.astro';
+import Footer from '@components/ui/Footer.astro';
+import { site } from '@data/site';
+import { withBase } from '../../utils/url';
+
+export async function getStaticPaths() {
+  const projects = await getCollection('projects', ({ data }) => !data.placeholder);
+  return projects.map((project) => ({ params: { slug: project.id }, props: { project } }));
+}
+
+const { project } = Astro.props;
+const { title, summary, cover } = project.data;
+const { Content } = await render(project);
+---
+
+<BaseLayout title={`${title}, ${site.name}`} description={summary}>
+  <Nav />
+  <main class="project container" id="top">
+    <a class="project__back" href={withBase('/#work')}>← All work</a>
+    <h1 class="project__title">{title}</h1>
+    <p class="project__summary">{summary}</p>
+    {cover && <Image class="project__cover" src={cover} alt={`${title} preview`} widths={[800, 1400]} sizes="100vw" />}
+    <div class="project__body">
+      <Content />
+      <p class="project__soon">The full case study is coming soon.</p>
+    </div>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+  .project {
+    display: grid;
+    gap: var(--space-6);
+    padding-block: var(--space-32) var(--space-24);
+  }
+
+  .project__back {
+    color: var(--color-text-2);
+    text-decoration: none;
+  }
+
+  .project__back:hover {
+    color: var(--color-text);
+  }
+
+  .project__title {
+    font-size: var(--text-hero);
+  }
+
+  .project__summary {
+    max-width: 40ch;
+    font-size: var(--text-lg);
+    color: var(--color-text-2);
+  }
+
+  .project__cover {
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-card);
+  }
+
+  .project__body {
+    display: grid;
+    gap: var(--space-4);
+    max-width: 62ch;
+    margin-top: var(--space-8);
+    color: var(--color-text-2);
+  }
+
+  .project__soon {
+    color: var(--color-accent);
+  }
+</style>

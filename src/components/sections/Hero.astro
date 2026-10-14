@@ -1,0 +1,100 @@
+---
+import LiquidChrome from '@components/effects/LiquidChrome/LiquidChrome.jsx';
+import SpecularButton from '@components/effects/Specular/SpecularButton.jsx';
+---
+
+<section class="hero" id="top">
+  <div class="hero__bg" aria-hidden="true">
+    <LiquidChrome
+      client:load
+      color="#a9c8ff"
+      speed={0.15}
+      amplitude={0.3}
+      roughness={0.3}
+      exposure={0.9}
+      rippleStrength={0.8}
+    />
+  </div>
+  <div class="hero__veil" aria-hidden="true"></div>
+
+  <div class="hero__content container">
+    <h1 class="hero__title" data-hero-in>
+      Hi, I’m Gonçalo. I design apps, sites <span class="accent">&amp; little tools.</span>
+    </h1>
+    <p class="hero__sub" data-hero-in style="--d:0.15s">
+      From the first mockup to something you can actually click.
+    </p>
+    <div data-hero-in style="--d:0.3s">
+      <SpecularButton client:load href="#work" size="md" radius={999} lineColor="#a9c8ff" baseColor="#4a5468">
+        See my work ↓
+      </SpecularButton>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    min-height: min(100svh, 56rem);
+    display: flex;
+    align-items: flex-end;
+    padding-block: var(--space-32) var(--space-16);
+    overflow: hidden;
+    isolation: isolate;
+    background: var(--color-bg);
+  }
+
+  .hero__bg {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+  }
+
+  /* Escurece o fundo por baixo do texto para se ler bem */
+  .hero__veil {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      linear-gradient(180deg, rgb(10 11 15 / 0.35) 0%, transparent 30%),
+      linear-gradient(0deg, var(--color-bg) 0%, rgb(10 11 15 / 0.7) 32%, transparent 70%);
+  }
+
+  .hero__content {
+    display: grid;
+    gap: var(--space-6);
+    justify-items: start;
+  }
+
+  .hero__title {
+    max-width: 14ch;
+    font-size: var(--text-hero);
+    font-weight: 600;
+  }
+
+  .hero__sub {
+    max-width: 42ch;
+    font-size: var(--text-lg);
+    color: var(--color-text-2);
+  }
+
+  /* Entrada automática ao abrir a página */
+  .js [data-hero-in] {
+    animation: hero-in var(--dur-slow) var(--ease-out) both;
+    animation-delay: calc(0.2s + var(--d, 0s));
+  }
+
+  @keyframes hero-in {
+    from {
+      opacity: 0;
+      transform: translateY(1.5rem);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .js [data-hero-in] {
+      animation: none;
+    }
+  }
+</style>

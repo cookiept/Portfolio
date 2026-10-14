@@ -17,18 +17,31 @@ npm run build    # gera o site final em dist/
 
 ```
 .
-├── public/               Ficheiros servidos tal como estão (favicon, robots.txt, CV em PDF…)
+├── public/                    Ficheiros servidos tal como estão (favicon, robots.txt, cv.pdf…)
 ├── src/
-│   ├── assets/images/    Imagens otimizadas pelo Astro (fotos, screenshots de projetos)
-│   ├── components/       Componentes reutilizáveis (Header, Footer, Card, Button…)
-│   ├── content/projects/ Um ficheiro Markdown por projeto
-│   ├── data/             Dados gerais do site (nome, links, redes sociais)
-│   ├── layouts/          Estrutura base das páginas (<head>, SEO)
-│   ├── pages/            Cada ficheiro é uma página/rota (index → /, 404…)
-│   └── styles/           tokens.css (style guide) e global.css
-├── docs/                 Notas do projeto (como trabalhar nos dois PCs, decisões)
-└── .github/              Verificação automática de build e atualizações de dependências
+│   ├── assets/projects/       Imagens de capa dos projetos (otimizadas pelo Astro)
+│   ├── components/
+│   │   ├── effects/           Efeitos interativos em React
+│   │   │   ├── LiquidChrome/  Fundo líquido do hero
+│   │   │   └── Specular/      Brilho na borda (botão e card) + hook partilhado
+│   │   ├── mascot/            Buddy, a mascote
+│   │   ├── sections/          Secções da landing page (Hero, Work, Contact)
+│   │   └── ui/                Peças pequenas (Nav, Footer, ProjectCard)
+│   ├── content/projects/      Um ficheiro Markdown por projeto
+│   ├── data/                  Dados gerais do site (nome, links)
+│   ├── layouts/               Estrutura base das páginas (<head>, SEO)
+│   ├── pages/                 Páginas: index, 404, projects/[slug]
+│   ├── scripts/               JavaScript da página (mascote, animações de scroll)
+│   ├── styles/                tokens.css (style guide) e global.css
+│   └── utils/                 Funções auxiliares
+├── docs/                      Notas do projeto
+└── .github/                   Build e publicação automática
 ```
+
+### Adicionar a imagem de um projeto
+
+1. Coloca a imagem em `src/assets/projects/` (ex.: `petsight.jpg`).
+2. No ficheiro do projeto em `src/content/projects/`, acrescenta `cover: ../../assets/projects/petsight.jpg`.
 
 ## Site online
 

@@ -1,0 +1,113 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { Image } from 'astro:assets';
+import SpecularCard from '@components/effects/Specular/SpecularCard.jsx';
+import { withBase } from '../../utils/url';
+
+interface Props {
+  project: CollectionEntry<'projects'>;
+  index: number;
+}
+
+const { project, index } = Astro.props;
+const { title, summary, cover, kind, placeholder } = project.data;
+const href = placeholder ? undefined : withBase(`/projects/${project.id}/`);
+---
+
+<article
+  class:list={['project', `project--${index + 1}`, { 'project--soon': placeholder }]}
+  data-reveal
+  data-buddy={placeholder ? 'soon' : title}
+  style={`--reveal-delay:${(index % 2) * 0.12}s`}
+>
+  <SpecularCard client:visible href={href} radius={24} lineColor="#a9c8ff" baseColor="#3a4254">
+    <div class="project__media">
+      {
+        cover ? (
+          <Image src={cover} alt={`${title} preview`} widths={[480, 800, 1200]} sizes="(max-width: 40rem) 100vw, 50vw" />
+        ) : (
+          <div class:list={['project__placeholder', `project__placeholder--${kind}`]} aria-hidden="true">
+            <span class="project__device" />
+          </div>
+        )
+      }
+    </div>
+    <div class="project__body">
+      <h3 class="project__title">{title}</h3>
+      <p class="project__summary">{summary}</p>
+    </div>
+  </SpecularCard>
+</article>
+
+<style>
+  .project {
+    min-width: 0;
+  }
+
+  .project__media {
+    /* nos cards mais altos a imagem cresce para ocupar o espaço */
+    flex: 1 1 auto;
+    margin: var(--space-3) var(--space-3) 0;
+    border-radius: var(--radius-media);
+    overflow: hidden;
+    aspect-ratio: 16 / 10;
+    background: var(--color-surface-2);
+  }
+
+  .project__media :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--dur-slow) var(--ease-out);
+  }
+
+  .project:hover .project__media :global(img) {
+    transform: scale(1.03);
+  }
+
+  .project__placeholder {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    place-items: center;
+    background: radial-gradient(120% 90% at 30% 10%, #26324a 0%, var(--color-surface-2) 55%, var(--color-surface) 100%);
+  }
+
+  .project__device {
+    display: block;
+    border: 1.5px solid var(--color-line-strong);
+    background: rgb(0 0 0 / 0.2);
+  }
+
+  .project__placeholder--app .project__device {
+    width: 18%;
+    aspect-ratio: 9 / 19;
+    border-radius: 14px;
+  }
+
+  .project__placeholder--web .project__device {
+    width: 55%;
+    aspect-ratio: 16 / 10;
+    border-radius: 8px;
+  }
+
+  .project__body {
+    display: grid;
+    gap: var(--space-2);
+    padding: var(--space-4) var(--space-6) var(--space-6);
+  }
+
+  .project__title {
+    font-size: var(--text-title);
+  }
+
+  .project__summary {
+    max-width: 46ch;
+    color: var(--color-text-2);
+  }
+
+  .project--soon .project__title,
+  .project--soon .project__summary {
+    color: var(--color-muted);
+  }
+</style>

@@ -1,10 +1,30 @@
 ---
 import BaseLayout from '@layouts/BaseLayout.astro';
+import Nav from '@components/ui/Nav.astro';
+import { withBase } from '../utils/url';
 ---
 
-<BaseLayout title="Página não encontrada">
-  <main>
-    <h1>404</h1>
-    <p>Esta página não existe. <a href={import.meta.env.BASE_URL}>Voltar ao início</a></p>
+<BaseLayout title="Page not found">
+  <Nav />
+  <main class="nf container">
+    <h1>Nothing here.</h1>
+    <p>Even Buddy couldn’t find this page. <a href={withBase('/')}>Go back home</a></p>
   </main>
 </BaseLayout>
+
+<style>
+  .nf {
+    min-height: 80vh;
+    display: grid;
+    align-content: center;
+    gap: var(--space-4);
+  }
+
+  h1 {
+    font-size: var(--text-hero);
+  }
+
+  p {
+    color: var(--color-text-2);
+  }
+</style>

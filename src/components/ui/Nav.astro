@@ -1,0 +1,58 @@
+---
+import { site } from '@data/site';
+import { withBase } from '../../utils/url';
+---
+
+<header class="nav">
+  <div class="nav__inner container">
+    <a class="nav__brand" href={withBase('/')}>{site.name.toLowerCase()}</a>
+    <nav aria-label="Main">
+      <ul class="nav__links">
+        <li><a href={withBase('/#work')}>Work</a></li>
+        <li><a href={withBase('/#contact')}>Contact</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .nav {
+    position: absolute;
+    inset: 0 0 auto;
+    z-index: 10;
+  }
+
+  .nav__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding-block: var(--space-6);
+  }
+
+  .nav__brand {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.25rem;
+    letter-spacing: -0.03em;
+    text-decoration: none;
+  }
+
+  .nav__links {
+    display: flex;
+    gap: var(--space-6);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .nav__links a {
+    text-decoration: none;
+    color: var(--color-text-2);
+    transition: color var(--dur-fast) var(--ease-out);
+  }
+
+  .nav__links a:hover {
+    color: var(--color-text);
+  }
+</style>

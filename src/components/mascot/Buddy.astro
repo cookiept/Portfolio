@@ -1,0 +1,322 @@
+---
+// Buddy: a mascote do site. Fica no canto, segue o rato com os olhos,
+// reage aos projetos, ao scroll e ao contacto, adormece se ninguém mexer
+// e responde quando lhe tocam. A lógica está em src/scripts/buddy.ts.
+---
+
+<div class="buddy" data-buddy-root>
+  <p class="buddy__bubble" aria-hidden="true"></p>
+  <button class="buddy__btn" type="button" aria-label="Buddy, the site mascot. Click to say hi.">
+    <svg class="buddy__svg" viewBox="0 0 100 100" aria-hidden="true">
+      <ellipse class="buddy__shadow" cx="50" cy="94" rx="26" ry="4"></ellipse>
+      <g class="buddy__figure">
+        <path class="buddy__arm buddy__arm--left" d="M18 60c-8 2-12 8-10 12s8 2 12-2"></path>
+        <g class="buddy__arm-wrap">
+          <path class="buddy__arm buddy__arm--right" d="M82 60c8 2 12 8 10 12s-8 2-12-2"></path>
+        </g>
+        <path class="buddy__body" d="M14 62C14 30 30 12 50 12s36 18 36 50c0 16-12 28-36 28S14 78 14 62z"></path>
+        <ellipse class="buddy__cheek" cx="30" cy="64" rx="6" ry="3.5"></ellipse>
+        <ellipse class="buddy__cheek" cx="70" cy="64" rx="6" ry="3.5"></ellipse>
+        <g class="buddy__eyes">
+          <g class="buddy__lids">
+            <ellipse class="buddy__eye" cx="38" cy="48" rx="5" ry="7"></ellipse>
+            <ellipse class="buddy__eye" cx="62" cy="48" rx="5" ry="7"></ellipse>
+            <circle class="buddy__shine" cx="40" cy="45.5" r="1.8"></circle>
+            <circle class="buddy__shine" cx="64" cy="45.5" r="1.8"></circle>
+          </g>
+        </g>
+        <g class="buddy__sleepy">
+          <path d="M32 50q6 4 12 0"></path>
+          <path d="M56 50q6 4 12 0"></path>
+        </g>
+        <path class="buddy__mouth buddy__mouth--smile" d="M43 66q7 6 14 0"></path>
+        <ellipse class="buddy__mouth buddy__mouth--o" cx="50" cy="68" rx="3.5" ry="4.5"></ellipse>
+      </g>
+    </svg>
+  </button>
+  <button class="buddy__hide" type="button" aria-label="Hide Buddy">×</button>
+</div>
+<button class="buddy-return" type="button" hidden aria-label="Bring Buddy back">
+  <svg viewBox="0 0 100 100" aria-hidden="true"><path d="M14 62C14 30 30 12 50 12s36 18 36 50c0 16-12 28-36 28S14 78 14 62z" fill="currentColor"></path></svg>
+</button>
+
+<style>
+  .buddy {
+    --size: 5.5rem;
+    position: fixed;
+    right: calc(var(--space-6) + env(safe-area-inset-right, 0px));
+    bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
+    z-index: 50;
+    width: var(--size);
+    height: var(--size);
+    transition:
+      transform var(--dur-base) var(--ease-settle),
+      opacity var(--dur-base) var(--ease-out);
+  }
+
+  .buddy.is-hidden {
+    transform: translateY(140%);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .buddy__btn {
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .buddy__btn:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 50%;
+  }
+
+  .buddy__svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .buddy__shadow {
+    fill: #000;
+    opacity: 0.4;
+    transform-box: fill-box;
+    transform-origin: center;
+    transition: transform 0.3s var(--ease-out);
+  }
+
+  .buddy__figure {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    transition: transform 0.4s var(--ease-settle);
+  }
+
+  .buddy__body,
+  .buddy__arm {
+    fill: var(--color-accent);
+  }
+
+  .buddy__arm-wrap {
+    transform-box: view-box;
+    transform-origin: 82px 62px;
+  }
+
+  .buddy__cheek {
+    fill: #fff;
+    opacity: 0.22;
+  }
+
+  .buddy__eyes {
+    transition: transform 0.18s ease-out;
+  }
+
+  .buddy__lids {
+    transform-box: fill-box;
+    transform-origin: center;
+    transition: transform 0.25s var(--ease-settle);
+  }
+
+  .buddy__eye,
+  .buddy__mouth--o {
+    fill: var(--color-bg);
+  }
+
+  .buddy__shine {
+    fill: #fff;
+  }
+
+  .buddy__mouth--smile,
+  .buddy__sleepy path {
+    fill: none;
+    stroke: var(--color-bg);
+    stroke-width: 3;
+    stroke-linecap: round;
+  }
+
+  .buddy__sleepy,
+  .buddy__mouth--o {
+    opacity: 0;
+  }
+
+  /* Estados */
+  .buddy.is-blinking .buddy__lids {
+    transform: scaleY(0.1);
+    transition-duration: 0.08s;
+  }
+
+  .buddy.is-excited .buddy__lids {
+    transform: scale(1.18);
+  }
+
+  .buddy.is-excited .buddy__mouth--smile,
+  .buddy.is-surprised .buddy__mouth--smile {
+    opacity: 0;
+  }
+
+  .buddy.is-excited .buddy__mouth--o,
+  .buddy.is-surprised .buddy__mouth--o {
+    opacity: 1;
+  }
+
+  .buddy.is-sleeping .buddy__eyes {
+    opacity: 0;
+  }
+
+  .buddy.is-sleeping .buddy__sleepy {
+    opacity: 1;
+  }
+
+  .buddy.is-sleeping .buddy__figure {
+    animation: breathe 3s ease-in-out infinite;
+  }
+
+  .buddy.is-hopping .buddy__figure {
+    animation: hop 0.6s var(--ease-out);
+  }
+
+  .buddy.is-hopping .buddy__shadow {
+    animation: shadow-hop 0.6s var(--ease-out);
+  }
+
+  .buddy.is-bouncing .buddy__figure {
+    transform: scale(1.06, 0.94);
+  }
+
+  .buddy.is-waving .buddy__arm-wrap {
+    animation: wave 0.5s ease-in-out 4;
+  }
+
+  @keyframes hop {
+    40% {
+      transform: translateY(-28%) scale(0.95, 1.05);
+    }
+    70% {
+      transform: translateY(0) scale(1.08, 0.92);
+    }
+  }
+
+  @keyframes shadow-hop {
+    40% {
+      transform: scale(0.6);
+    }
+  }
+
+  @keyframes breathe {
+    50% {
+      transform: scale(1.03, 0.97);
+    }
+  }
+
+  @keyframes wave {
+    50% {
+      transform: rotate(-38deg);
+    }
+  }
+
+  /* Balão de fala */
+  .buddy__bubble {
+    position: absolute;
+    right: 30%;
+    bottom: calc(100% + var(--space-2));
+    width: max-content;
+    max-width: min(15rem, 70vw);
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-line-strong);
+    border-radius: 14px 14px 4px 14px;
+    background: var(--color-surface-2);
+    color: var(--color-text);
+    font-size: var(--text-sm);
+    line-height: 1.35;
+    opacity: 0;
+    transform: translateY(0.5rem) scale(0.95);
+    transform-origin: 100% 100%;
+    pointer-events: none;
+    transition:
+      opacity var(--dur-fast) var(--ease-out),
+      transform var(--dur-fast) var(--ease-out);
+  }
+
+  .buddy__bubble.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  .buddy__hide {
+    position: absolute;
+    top: -0.25rem;
+    right: -0.25rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 1px solid var(--color-line-strong);
+    border-radius: 50%;
+    background: var(--color-surface-2);
+    color: var(--color-text-2);
+    font-size: 0.9rem;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity var(--dur-fast) var(--ease-out);
+  }
+
+  .buddy:hover .buddy__hide,
+  .buddy__hide:focus-visible {
+    opacity: 1;
+  }
+
+  .buddy-return {
+    position: fixed;
+    right: calc(var(--space-6) + env(safe-area-inset-right, 0px));
+    bottom: 0;
+    z-index: 50;
+    width: 2.75rem;
+    height: 1.5rem;
+    padding: 0.35rem 0.6rem 0;
+    border: 1px solid var(--color-line-strong);
+    border-bottom: 0;
+    border-radius: 12px 12px 0 0;
+    background: var(--color-surface-2);
+    color: var(--color-accent);
+    cursor: pointer;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-sizing: content-box;
+  }
+
+  .buddy-return svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  @media (hover: none) {
+    .buddy__hide {
+      opacity: 0.8;
+    }
+  }
+
+  @media (max-width: 40rem) {
+    .buddy {
+      --size: 4.25rem;
+      right: calc(var(--space-3) + env(safe-area-inset-right, 0px));
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .buddy *,
+    .buddy {
+      animation: none !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
+
+<script>
+  import '../../scripts/buddy';
+</script>
