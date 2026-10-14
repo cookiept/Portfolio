@@ -30,6 +30,10 @@ npm run build    # gera o site final em dist/
 └── .github/              Verificação automática de build e atualizações de dependências
 ```
 
+## Site online
+
+Publicado automaticamente em https://cookiept.github.io/Portfolio/ a cada push para o `main`.
+
 ## Trabalhar nos dois PCs
 
 Ver [docs/workflow.md](docs/workflow.md).

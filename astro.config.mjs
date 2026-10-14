@@ -2,8 +2,10 @@
 import { defineConfig } from 'astro/config';
 
 // https://docs.astro.build/en/reference/configuration-reference/
+// Publicado no GitHub Pages em https://cookiept.github.io/Portfolio/
+// Se mais tarde usares um domínio próprio: muda `site` e remove `base`.
 export default defineConfig({
-  // Atualizar quando houver domínio final
-  site: 'https://example.com',
+  site: 'https://cookiept.github.io',
+  base: '/Portfolio',
   output: 'static',
 });
