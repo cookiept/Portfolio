@@ -217,7 +217,7 @@ export default function DappledLight({
       const aspect = w / h;
       layout =
         aspect >= 1
-          ? { cx: aspect - Math.min(0.6, aspect * 0.28), cy: 0.64, H: 0.22, aspect }
+          ? { cx: aspect - Math.min(0.47, aspect * 0.24), cy: 0.52, H: 0.22, aspect }
           : { cx: aspect * 0.62, cy: 0.74, H: 0.15, aspect };
       gl.uniform4f(u.patch, layout.cx, layout.cy, layout.H * 1.4, layout.H * 0.78);
       gl.uniform1f(u.rot, 0.42);
