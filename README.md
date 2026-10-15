@@ -22,7 +22,8 @@ npm run build    # gera o site final em dist/
 │   ├── assets/projects/       Imagens de capa dos projetos (otimizadas pelo Astro)
 │   ├── components/
 │   │   ├── effects/           Efeitos interativos em React
-│   │   │   ├── LiquidChrome/  Fundo líquido do hero
+│   │   │   ├── DappledLight/  Fundo do hero (luz da janela com folhas)
+│   │   │   ├── LiquidChrome/  Fundo líquido antigo (já não é usado)
 │   │   │   └── Specular/      Brilho na borda (botão e card) + hook partilhado
 │   │   ├── mascot/            Buddy, a mascote
 │   │   ├── sections/          Secções da landing page (Hero, Work, Contact)

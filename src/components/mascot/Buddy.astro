@@ -1,10 +1,12 @@
 ---
-// Buddy: a mascote do site. Fica no canto, segue o rato com os olhos,
-// reage aos projetos, ao scroll e ao contacto, adormece se ninguém mexer
-// e responde quando lhe tocam. A lógica está em src/scripts/buddy.ts.
+// Buddy: a mascote do site. Vive no fundo do ecrã: passeia de um lado
+// para o outro, entretém-se sozinho, segue o rato com os olhos, reage aos
+// projetos e ao contacto e mete-se com o visitante de vez em quando.
+// A lógica está em src/scripts/buddy.ts.
 ---
 
 <div class="buddy" data-buddy-root>
+  <div class="buddy__stage">
   <p class="buddy__bubble" aria-hidden="true"></p>
   <button class="buddy__btn" type="button" aria-label="Buddy, the site mascot. Click to say hi.">
     <svg class="buddy__svg" viewBox="0 0 100 100" aria-hidden="true">
@@ -31,10 +33,16 @@
         </g>
         <path class="buddy__mouth buddy__mouth--smile" d="M43 66q7 6 14 0"></path>
         <ellipse class="buddy__mouth buddy__mouth--o" cx="50" cy="68" rx="3.5" ry="4.5"></ellipse>
+        <g class="buddy__book">
+          <path d="M28 70l22 5 22-5v16l-22 5-22-5z"></path>
+          <path class="buddy__book-line" d="M50 75v16"></path>
+        </g>
       </g>
+      <circle class="buddy__ball" cx="50" cy="4" r="6"></circle>
     </svg>
   </button>
   <button class="buddy__hide" type="button" aria-label="Hide Buddy">×</button>
+  </div>
 </div>
 <button class="buddy-return" type="button" hidden aria-label="Bring Buddy back">
   <svg viewBox="0 0 100 100" aria-hidden="true"><path d="M14 62C14 30 30 12 50 12s36 18 36 50c0 16-12 28-36 28S14 78 14 62z" fill="currentColor"></path></svg>
@@ -44,20 +52,37 @@
   .buddy {
     --size: 5.5rem;
     position: fixed;
-    right: calc(var(--space-6) + env(safe-area-inset-right, 0px));
+    left: 0;
     bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
     z-index: 50;
     width: var(--size);
     height: var(--size);
+    /* A posição horizontal (--x) é controlada pelo script */
+    transform: translateX(var(--x, calc(100vw - var(--size) - var(--space-8))));
+    transition: transform var(--walk-dur, 0s) linear;
+  }
+
+  .buddy__stage {
+    position: relative;
+    width: 100%;
+    height: 100%;
     transition:
       transform var(--dur-base) var(--ease-settle),
       opacity var(--dur-base) var(--ease-out);
   }
 
-  .buddy.is-hidden {
+  .buddy.is-hidden .buddy__stage {
     transform: translateY(140%);
     opacity: 0;
     pointer-events: none;
+  }
+
+  .buddy__svg {
+    transition: transform 0.25s var(--ease-out);
+  }
+
+  .buddy.is-facing-left .buddy__svg {
+    transform: scaleX(-1);
   }
 
   .buddy__btn {
@@ -81,6 +106,24 @@
     width: 100%;
     height: 100%;
     overflow: visible;
+  }
+
+  .buddy__ball,
+  .buddy__book {
+    opacity: 0;
+    transition: opacity 0.2s var(--ease-out);
+  }
+
+  .buddy__ball {
+    fill: var(--color-text);
+    transform-box: view-box;
+  }
+
+  .buddy__book path {
+    fill: var(--color-surface-2);
+    stroke: var(--color-text-2);
+    stroke-width: 1.5;
+    stroke-linejoin: round;
   }
 
   .buddy__shadow {
@@ -192,6 +235,89 @@
     animation: wave 0.5s ease-in-out 4;
   }
 
+  .buddy.is-walking .buddy__figure {
+    animation: waddle 0.42s ease-in-out infinite;
+  }
+
+  .buddy.is-stretching .buddy__figure {
+    animation: stretch 1.6s var(--ease-out);
+  }
+
+  .buddy.is-stretching .buddy__arm {
+    animation: arms-up 1.6s var(--ease-out);
+  }
+
+  .buddy.is-yawning .buddy__lids {
+    transform: scaleY(0.25);
+  }
+
+  .buddy.is-yawning .buddy__mouth--smile {
+    opacity: 0;
+  }
+
+  .buddy.is-yawning .buddy__mouth--o {
+    opacity: 1;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: yawn 1.8s ease-in-out;
+  }
+
+  .buddy.is-juggling .buddy__ball {
+    opacity: 1;
+    animation: ball 0.9s ease-in-out 3;
+  }
+
+  .buddy.is-reading .buddy__book {
+    opacity: 1;
+  }
+
+  .buddy.is-reading .buddy__figure {
+    animation: breathe 3s ease-in-out infinite;
+  }
+
+  @keyframes waddle {
+    25% {
+      transform: translateY(-5%) rotate(-5deg);
+    }
+    50% {
+      transform: translateY(0) rotate(0deg);
+    }
+    75% {
+      transform: translateY(-5%) rotate(5deg);
+    }
+  }
+
+  @keyframes stretch {
+    40%,
+    60% {
+      transform: scale(0.94, 1.14);
+    }
+  }
+
+  @keyframes arms-up {
+    40%,
+    60% {
+      transform: translateY(-14px);
+    }
+  }
+
+  @keyframes yawn {
+    40%,
+    70% {
+      transform: scale(1.5, 1.9);
+    }
+  }
+
+  @keyframes ball {
+    0%,
+    100% {
+      transform: translateY(14px);
+    }
+    50% {
+      transform: translateY(-26px);
+    }
+  }
+
   @keyframes hop {
     40% {
       transform: translateY(-28%) scale(0.95, 1.05);
@@ -240,6 +366,13 @@
     transition:
       opacity var(--dur-fast) var(--ease-out),
       transform var(--dur-fast) var(--ease-out);
+  }
+
+  .buddy.is-left .buddy__bubble {
+    right: auto;
+    left: 30%;
+    border-radius: 14px 14px 14px 4px;
+    transform-origin: 0 100%;
   }
 
   .buddy__bubble.is-visible {
@@ -304,7 +437,6 @@
   @media (max-width: 40rem) {
     .buddy {
       --size: 4.25rem;
-      right: calc(var(--space-3) + env(safe-area-inset-right, 0px));
     }
   }
 

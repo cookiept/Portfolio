@@ -1,19 +1,11 @@
 ---
-import LiquidChrome from '@components/effects/LiquidChrome/LiquidChrome.jsx';
+import DappledLight from '@components/effects/DappledLight/DappledLight.jsx';
 import SpecularButton from '@components/effects/Specular/SpecularButton.jsx';
 ---
 
 <section class="hero" id="top">
   <div class="hero__bg" aria-hidden="true">
-    <LiquidChrome
-      client:load
-      color="#a9c8ff"
-      speed={0.15}
-      amplitude={0.3}
-      roughness={0.3}
-      exposure={0.9}
-      rippleStrength={0.8}
-    />
+    <DappledLight client:load color="#a9c8ff" background="#0a0b0f" />
   </div>
   <div class="hero__veil" aria-hidden="true"></div>
 
