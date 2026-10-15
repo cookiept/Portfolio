@@ -219,7 +219,7 @@ export default function DappledLight({
         aspect >= 1
           ? { cx: aspect - Math.min(0.6, aspect * 0.28), cy: 0.64, H: 0.22, aspect }
           : { cx: aspect * 0.62, cy: 0.74, H: 0.15, aspect };
-      gl.uniform4f(u.patch, layout.cx, layout.cy, layout.H * 1.4, layout.H);
+      gl.uniform4f(u.patch, layout.cx, layout.cy, layout.H * 1.4, layout.H * 0.78);
       gl.uniform1f(u.rot, 0.42);
     };
     resize();
@@ -266,7 +266,7 @@ export default function DappledLight({
       // Vento: balanço lento com rajadas suaves de vez em quando
       const gust = Math.max(0, Math.sin(time * 0.13) * Math.sin(time * 0.29 + 0.8)) * 0.6;
 
-      const branchRot = BRANCHES.map((br) => (Math.sin(time * 0.5 + br.phase) * 0.025 + gust * 0.03) * (reduced ? 0 : 1));
+      const branchRot = BRANCHES.map((br) => (Math.sin(time * 0.5 + br.phase) * 0.01 + gust * 0.012) * (reduced ? 0 : 1));
 
       let segCount = 0;
       BRANCHES.forEach((br, bi) => {
@@ -290,7 +290,7 @@ export default function DappledLight({
         const attach = rotAround(toWorld(bezier(br.p0, br.p1, br.p2, lf.t)), o, branchRot[lf.branch]);
         const tg = tangent(br.p0, br.p1, br.p2, lf.t);
         const base = Math.atan2(tg[1], tg[0]) + branchRot[lf.branch] + lf.side * lf.spread;
-        const sway = reduced ? 0 : Math.sin(time * (1 + gust) * 1.2 + lf.phase) * (0.08 + gust * 0.12);
+        const sway = reduced ? 0 : Math.sin(time * (1 + gust) * 1.2 + lf.phase) * (0.03 + gust * 0.04);
         const len = lf.len * layout.H;
 
         // O rato empurra as folhas que estão perto, depois elas voltam ao lugar
@@ -301,9 +301,9 @@ export default function DappledLight({
           const dist = Math.hypot(mouse.x - cx, mouse.y - cy);
           const infl = Math.exp(-((dist / (layout.H * 0.55)) ** 2));
           const push = (-Math.sin(a0) * mdx + Math.cos(a0) * mdy) / len;
-          lf.vel += push * infl * 3.5 * mouseInfluence;
+          lf.vel += push * infl * 1.6 * mouseInfluence;
           lf.vel += (-28 * lf.ang - 3.2 * lf.vel) * dt;
-          lf.ang = Math.max(-0.5, Math.min(0.5, lf.ang + lf.vel * dt));
+          lf.ang = Math.max(-0.28, Math.min(0.28, lf.ang + lf.vel * dt));
         }
 
         const a = base + sway + lf.ang;
