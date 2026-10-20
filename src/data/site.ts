@@ -6,6 +6,7 @@ export const site = {
   lang: 'en',
   links: {
     instagram: { handle: '@goncas.02', url: 'https://www.instagram.com/goncas.02/' },
+    linkedin: { handle: 'Gonçalo Almeida', url: 'https://www.linkedin.com/in/gon%C3%A7alo-almeida-439967225/' },
     // Email profissional ainda por criar
     email: null as string | null,
     // CV em PDF: colocar em public/cv.pdf e mudar para true

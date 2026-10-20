@@ -3,7 +3,7 @@ import SpecularButton from '@components/effects/Specular/SpecularButton.jsx';
 import { site } from '@data/site';
 import { withBase } from '../../utils/url';
 
-const { instagram, cv } = site.links;
+const { instagram, linkedin, cv } = site.links;
 ---
 
 <section id="contact" class="contact container" aria-labelledby="contact-title" data-buddy-zone="contact">
@@ -44,6 +44,9 @@ const { instagram, cv } = site.links;
       <p class="contact__lede">Rather chat somewhere else?</p>
       <a class="contact__link" href={instagram.url} target="_blank" rel="noopener noreferrer">
         Instagram <span>{instagram.handle} ↗</span>
+      </a>
+      <a class="contact__link" href={linkedin.url} target="_blank" rel="noopener noreferrer">
+        LinkedIn <span>{linkedin.handle} ↗</span>
       </a>
       <p class="contact__link">
         Résumé
