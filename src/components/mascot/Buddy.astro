@@ -10,21 +10,56 @@
   <p class="buddy__bubble" aria-hidden="true"></p>
   <button class="buddy__btn" type="button" aria-label="Buddy, the site mascot. Click to say hi.">
     <svg class="buddy__svg" viewBox="0 0 100 100" aria-hidden="true">
-      <ellipse class="buddy__shadow" cx="50" cy="94" rx="26" ry="4"></ellipse>
+      <defs>
+        <!-- Volume: luz de cima à esquerda, sombra em baixo à direita -->
+        <radialGradient id="buddy-body" cx="36%" cy="26%" r="78%">
+          <stop offset="0" stop-color="#eef5ff"></stop>
+          <stop offset="0.35" stop-color="#b9d3ff"></stop>
+          <stop offset="0.75" stop-color="#86a9ec"></stop>
+          <stop offset="1" stop-color="#5b7fc4"></stop>
+        </radialGradient>
+        <radialGradient id="buddy-arm" cx="40%" cy="30%" r="80%">
+          <stop offset="0" stop-color="#cfe0ff"></stop>
+          <stop offset="1" stop-color="#6f93d8"></stop>
+        </radialGradient>
+        <radialGradient id="buddy-belly" cx="50%" cy="40%" r="60%">
+          <stop offset="0" stop-color="#ffffff" stop-opacity="0.55"></stop>
+          <stop offset="1" stop-color="#ffffff" stop-opacity="0"></stop>
+        </radialGradient>
+        <radialGradient id="buddy-eye" cx="40%" cy="30%" r="75%">
+          <stop offset="0" stop-color="#3a4a6b"></stop>
+          <stop offset="1" stop-color="#0d1322"></stop>
+        </radialGradient>
+        <filter id="buddy-soft" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="2.2"></feGaussianBlur>
+        </filter>
+        <filter id="buddy-softer" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="3.5"></feGaussianBlur>
+        </filter>
+      </defs>
+      <ellipse class="buddy__shadow" cx="50" cy="94" rx="26" ry="4" filter="url(#buddy-softer)"></ellipse>
       <g class="buddy__figure">
+        <ellipse class="buddy__foot" cx="38" cy="89" rx="8" ry="4"></ellipse>
+        <ellipse class="buddy__foot" cx="62" cy="89" rx="8" ry="4"></ellipse>
         <path class="buddy__arm buddy__arm--left" d="M18 60c-8 2-12 8-10 12s8 2 12-2"></path>
         <g class="buddy__arm-wrap">
           <path class="buddy__arm buddy__arm--right" d="M82 60c8 2 12 8 10 12s-8 2-12-2"></path>
         </g>
         <path class="buddy__body" d="M14 62C14 30 30 12 50 12s36 18 36 50c0 16-12 28-36 28S14 78 14 62z"></path>
-        <ellipse class="buddy__cheek" cx="30" cy="64" rx="6" ry="3.5"></ellipse>
-        <ellipse class="buddy__cheek" cx="70" cy="64" rx="6" ry="3.5"></ellipse>
+        <ellipse class="buddy__belly" cx="50" cy="72" rx="20" ry="14"></ellipse>
+        <path class="buddy__rim" d="M80 50c4 10 4 22-2 30" filter="url(#buddy-soft)"></path>
+        <ellipse class="buddy__gloss" cx="34" cy="26" rx="9" ry="5.5" transform="rotate(-28 34 26)" filter="url(#buddy-soft)"></ellipse>
+        <circle class="buddy__gloss buddy__gloss--dot" cx="26" cy="36" r="1.8"></circle>
+        <ellipse class="buddy__cheek" cx="29" cy="62" rx="6" ry="3.5" filter="url(#buddy-soft)"></ellipse>
+        <ellipse class="buddy__cheek" cx="71" cy="62" rx="6" ry="3.5" filter="url(#buddy-soft)"></ellipse>
         <g class="buddy__eyes">
           <g class="buddy__lids">
             <ellipse class="buddy__eye" cx="38" cy="48" rx="5" ry="7"></ellipse>
             <ellipse class="buddy__eye" cx="62" cy="48" rx="5" ry="7"></ellipse>
             <circle class="buddy__shine" cx="40" cy="45.5" r="1.8"></circle>
             <circle class="buddy__shine" cx="64" cy="45.5" r="1.8"></circle>
+            <circle class="buddy__shine buddy__shine--small" cx="36.6" cy="51.5" r="0.9"></circle>
+            <circle class="buddy__shine buddy__shine--small" cx="60.6" cy="51.5" r="0.9"></circle>
           </g>
         </g>
         <g class="buddy__sleepy">
@@ -128,7 +163,7 @@
 
   .buddy__shadow {
     fill: #000;
-    opacity: 0.4;
+    opacity: 0.55;
     transform-box: fill-box;
     transform-origin: center;
     transition: transform 0.3s var(--ease-out);
@@ -140,9 +175,38 @@
     transition: transform 0.4s var(--ease-settle);
   }
 
-  .buddy__body,
+  .buddy__body {
+    fill: url(#buddy-body);
+  }
+
   .buddy__arm {
-    fill: var(--color-accent);
+    fill: url(#buddy-arm);
+  }
+
+  .buddy__foot {
+    fill: #6f93d8;
+  }
+
+  .buddy__belly {
+    fill: url(#buddy-belly);
+  }
+
+  /* Luz de recorte do lado da sombra e brilho no topo da cabeça */
+  .buddy__rim {
+    fill: none;
+    stroke: #e6f0ff;
+    stroke-width: 2;
+    stroke-linecap: round;
+    opacity: 0.55;
+  }
+
+  .buddy__gloss {
+    fill: #fff;
+    opacity: 0.85;
+  }
+
+  .buddy__gloss--dot {
+    opacity: 0.7;
   }
 
   .buddy__arm-wrap {
@@ -151,8 +215,8 @@
   }
 
   .buddy__cheek {
-    fill: #fff;
-    opacity: 0.22;
+    fill: #ff9db8;
+    opacity: 0.55;
   }
 
   .buddy__eyes {
@@ -165,19 +229,26 @@
     transition: transform 0.25s var(--ease-settle);
   }
 
-  .buddy__eye,
+  .buddy__eye {
+    fill: url(#buddy-eye);
+  }
+
   .buddy__mouth--o {
-    fill: var(--color-bg);
+    fill: #1b2a44;
   }
 
   .buddy__shine {
     fill: #fff;
   }
 
+  .buddy__shine--small {
+    opacity: 0.75;
+  }
+
   .buddy__mouth--smile,
   .buddy__sleepy path {
     fill: none;
-    stroke: var(--color-bg);
+    stroke: #1b2a44;
     stroke-width: 3;
     stroke-linecap: round;
   }
