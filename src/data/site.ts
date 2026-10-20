@@ -11,8 +11,7 @@ export const site = {
     // CV em PDF: colocar em public/cv.pdf e mudar para true
     cv: false,
   },
-  // Formulário de contacto: as mensagens chegam por email através do FormSubmit.
-  // Depois de ativares o formulário (link no 1.º email), podes trocar o email
-  // pelo código aleatório que o FormSubmit te dá, para não ficar público.
-  contactForm: 'https://formsubmit.co/ajax/goncalogsa@gmail.com',
+  // Formulário de contacto: as mensagens chegam ao teu email através do FormSubmit.
+  // O código no fim é o alias que o FormSubmit deu, para o email não ficar público.
+  contactForm: 'https://formsubmit.co/ajax/3f8563f19e302521122b0527982c7a88',
 };
