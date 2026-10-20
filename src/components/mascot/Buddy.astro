@@ -143,6 +143,26 @@
     overflow: visible;
   }
 
+  /* Versão 3D: o canvas é maior do que o botão para caberem a antena,
+     os braços e os saltos. O SVG fica escondido mas continua a existir,
+     porque o script lê dele para onde o Buddy está a olhar. */
+  .buddy.is-3d .buddy__svg {
+    visibility: hidden;
+  }
+
+  .buddy__btn :global(.buddy__canvas) {
+    position: absolute;
+    left: -40%;
+    bottom: -12%;
+    width: 180%;
+    height: 180%;
+    pointer-events: none;
+  }
+
+  .buddy__btn {
+    position: relative;
+  }
+
   .buddy__ball,
   .buddy__book {
     opacity: 0;
@@ -522,4 +542,12 @@
 
 <script>
   import '../../scripts/buddy';
+
+  // O modelo 3D carrega depois do resto da página, para não a atrasar
+  const root = document.querySelector<HTMLElement>('[data-buddy-root]');
+  if (root) {
+    const load = () => import('../../scripts/buddy3d').then((m) => m.mountBuddy3D(root));
+    if ('requestIdleCallback' in window) requestIdleCallback(load, { timeout: 2500 });
+    else window.setTimeout(load, 1200);
+  }
 </script>
