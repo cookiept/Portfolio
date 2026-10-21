@@ -17,7 +17,7 @@ const href = placeholder ? undefined : withBase(`/projects/${project.id}/`);
 <article
   class:list={['project', `project--${index + 1}`, { 'project--soon': placeholder }]}
   data-reveal
-  data-buddy={placeholder ? 'soon' : title}
+  data-fred={placeholder ? 'soon' : title}
   style={`--reveal-delay:${(index % 2) * 0.12}s`}
 >
   <SpecularCard client:visible href={href} radius={24} lineColor="#a9c8ff" baseColor="#3a4254">

@@ -2,7 +2,7 @@
 import '@fontsource-variable/bricolage-grotesque';
 import '@fontsource-variable/hanken-grotesk';
 import '@styles/global.css';
-import Buddy from '@components/mascot/Buddy.astro';
+import Fred from '@components/mascot/Fred.astro';
 import { site } from '@data/site';
 import { withBase } from '../utils/url';
 
@@ -34,7 +34,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
   </head>
   <body>
     <slot />
-    <Buddy />
+    <Fred />
     <script>
       import '../scripts/reveal';
     </script>

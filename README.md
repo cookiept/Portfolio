@@ -25,7 +25,7 @@ npm run build    # gera o site final em dist/
 │   │   │   ├── DappledLight/  Fundo do hero (luz da janela com folhas)
 │   │   │   ├── LiquidChrome/  Fundo líquido antigo (já não é usado)
 │   │   │   └── Specular/      Brilho na borda (botão e card) + hook partilhado
-│   │   ├── mascot/            Buddy, a mascote
+│   │   ├── mascot/            Fred, a mascote (passarinho em SVG)
 │   │   ├── sections/          Secções da landing page (Hero, Work, Contact)
 │   │   └── ui/                Peças pequenas (Nav, Footer, ProjectCard)
 │   ├── content/projects/      Um ficheiro Markdown por projeto

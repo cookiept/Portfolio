@@ -1,27 +1,27 @@
-// Comportamento do Buddy, a mascote do site.
+// Comportamento do Fred, a mascote do site.
 // Vive no fundo do ecrã: de vez em quando passeia, espreita da borda ou
 // entretém-se com uma pequena rotina. Segue o rato com os olhos, reage aos
 // projetos e ao contacto, mete-se com o visitante (sem exagerar) e
 // adormece se ninguém mexer durante um bocado.
 
-const root = document.querySelector<HTMLElement>('[data-buddy-root]');
-const returnBtn = document.querySelector<HTMLButtonElement>('.buddy-return');
+const root = document.querySelector<HTMLElement>('[data-fred-root]');
+const returnBtn = document.querySelector<HTMLButtonElement>('.fred-return');
 
 if (root && returnBtn) {
-  const btn = root.querySelector<HTMLButtonElement>('.buddy__btn')!;
-  const hideBtn = root.querySelector<HTMLButtonElement>('.buddy__hide')!;
-  const bubble = root.querySelector<HTMLElement>('.buddy__bubble')!;
-  const eyes = root.querySelector<SVGGElement>('.buddy__eyes')!;
+  const btn = root.querySelector<HTMLButtonElement>('.fred__btn')!;
+  const hideBtn = root.querySelector<HTMLButtonElement>('.fred__hide')!;
+  const bubble = root.querySelector<HTMLElement>('.fred__bubble')!;
+  const eyes = root.querySelector<SVGGElement>('.fred__eyes')!;
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const IDLE_MS = 45000; // adormece ao fim deste tempo sem mexer
   const TEASE_GAP_MS = 15000; // intervalo mínimo entre comentários automáticos
   const WALK_SPEED = 110; // px por segundo
   const MARGIN = 24;
-  const STORAGE_KEY = 'buddy-hidden';
+  const STORAGE_KEY = 'fred-hidden';
 
   const clickLines = [
-    'Hi! I’m Buddy.',
+    'Hi! I’m Fred.',
     'I keep an eye on Gonçalo’s projects.',
     'Gonçalo keeps me around for company.',
     'Hehe, that tickles.',
@@ -62,13 +62,15 @@ if (root && returnBtn) {
     bubbleTimer = window.setTimeout(() => bubble.classList.remove('is-visible'), ms);
   };
 
-  // Comentários automáticos: só um de cada vez e com intervalo entre eles
-  const tease = (text: string, ms = 2600) => {
+  // Comentários automáticos: só um de cada vez e com intervalo entre eles.
+  // Por defeito põe as mãos na cintura enquanto fala.
+  const tease = (text: string, ms = 2600, pose = 'is-sassy') => {
     const now = Date.now();
     if (isHidden() || sleeping || now - lastTease < TEASE_GAP_MS) return false;
     if (bubble.classList.contains('is-visible')) return false;
     lastTease = now;
     say(text, ms);
+    if (pose && !reduced && !busy) flash(pose, pose === 'is-jumping' ? 700 : ms);
     return true;
   };
 
@@ -78,7 +80,7 @@ if (root && returnBtn) {
     const dx = px - (r.left + r.width / 2);
     const dy = py - (r.top + r.height * 0.48);
     const dist = Math.hypot(dx, dy) || 1;
-    const reach = Math.min(1, dist / 300) * 4; // até 4 unidades do SVG
+    const reach = Math.min(1, dist / 300) * 2.6; // até 2.6 unidades do SVG
     // o SVG pode estar espelhado quando ele está virado para a esquerda
     const ex = (dx / dist) * reach * (facing < 0 ? -1 : 1);
     eyes.style.transform = `translate(${ex}px, ${(dy / dist) * reach * 0.8}px)`;
@@ -112,7 +114,7 @@ if (root && returnBtn) {
     if (dist < 8) return;
     const dur = (dist / WALK_SPEED) * 1000;
     setFacing(nx < x ? -1 : 1);
-    setEyes(2.5, 0); // olha em frente enquanto anda
+    root.classList.remove('is-sitting', 'is-back');
     root.classList.add('is-walking');
     placeAt(nx, dur);
     await wait(dur);
@@ -140,12 +142,15 @@ if (root && returnBtn) {
       await wait(700);
     },
     async peek() {
-      // esconde-se meio fora do ecrã e espreita
+      // vai para a borda, fica de costas a "esconder-se" e depois espreita
       const toLeft = x < window.innerWidth / 2;
       const start = x;
       await walkTo(toLeft ? -size() * 0.55 : window.innerWidth - size() * 0.45, true);
+      root.classList.add('is-back');
+      await wait(1400);
+      root.classList.remove('is-back');
       setFacing(toLeft ? 1 : -1);
-      setEyes(3, 0);
+      setEyes(2, 0);
       await wait(2600);
       await walkTo(start);
     },
@@ -163,11 +168,22 @@ if (root && returnBtn) {
       await wait(2800);
     },
     async read() {
-      setEyes(0, 3.5);
-      root.classList.add('is-reading');
+      setEyes(0, 2.5);
+      root.classList.add('is-sitting', 'is-reading');
       await wait(4500);
-      root.classList.remove('is-reading');
-      if (Math.random() < 0.5) tease('This book is great, by the way.');
+      root.classList.remove('is-sitting', 'is-reading');
+      if (Math.random() < 0.5) tease('This book is great, by the way.', 2600, '');
+    },
+    async sit() {
+      // senta-se um bocado a ver a página
+      root.classList.add('is-sitting');
+      await wait(1500);
+      setEyes(-2, -1);
+      await wait(1500);
+      setEyes(2, -1);
+      await wait(2500);
+      root.classList.remove('is-sitting');
+      await wait(400);
     },
   };
 
@@ -178,6 +194,7 @@ if (root && returnBtn) {
     ['yawn', 1],
     ['juggle', 1.5],
     ['read', 1],
+    ['sit', 1.5],
   ];
 
   const pickRoutine = () => {
@@ -214,7 +231,7 @@ if (root && returnBtn) {
       return;
     }
     sleeping = true;
-    root.classList.add('is-sleeping');
+    root.classList.add('is-sitting', 'is-sleeping');
     say('z z z…', 4000);
   };
 
@@ -223,7 +240,7 @@ if (root && returnBtn) {
     idleTimer = window.setTimeout(fallAsleep, IDLE_MS);
     if (!sleeping) return;
     sleeping = false;
-    root.classList.remove('is-sleeping');
+    root.classList.remove('is-sitting', 'is-sleeping');
     flash('is-surprised', 900);
     say('Oh! I’m awake, I promise.');
   };
@@ -249,7 +266,7 @@ if (root && returnBtn) {
   hideBtn.addEventListener('click', () => setHidden(true));
   returnBtn.addEventListener('click', () => {
     setHidden(false);
-    flash('is-hopping', 600);
+    flash('is-waving', 2000);
     say('I’m back!');
   });
 
@@ -266,7 +283,8 @@ if (root && returnBtn) {
   // ---------- interação direta ----------
   btn.addEventListener('click', () => {
     wakeUp();
-    if (!reduced) flash('is-hopping', 600);
+    root.classList.remove('is-sitting');
+    if (!reduced) flash('is-jumping', 700);
     say(clickLines[Math.min(clicks, clickLines.length - 1)]);
     clicks++;
   });
@@ -286,10 +304,11 @@ if (root && returnBtn) {
       if (dist < r.width * 0.9 && dist > r.width * 0.55 && now - lastDodge > 45000) {
         lastDodge = now;
         busy = true;
-        tease(pick(['Hey, personal space!', 'Whoa, careful!', 'You can click me, you know.']));
+        // afasta-se um passinho, vira-se e põe as mãos na cintura
         walkTo(x - Math.sign(dx || 1) * 90).finally(() => {
           setFacing(dx > 0 ? 1 : -1);
           busy = false;
+          tease(pick(['Hey, personal space!', 'Whoa, careful!', 'You can click me, you know.']));
         });
       }
     },
@@ -310,31 +329,31 @@ if (root && returnBtn) {
     }
     if (hiddenAt && Date.now() - hiddenAt > 8000) {
       wakeUp();
-      if (tease('You’re back!') && !reduced) flash('is-hopping', 600);
+      tease('You’re back!', 2400, 'is-waving');
     }
   });
 
   // ---------- reagir aos projetos ----------
   let dwellTimer = 0;
   document.addEventListener('pointerover', (e) => {
-    const card = (e.target as Element).closest<HTMLElement>('[data-buddy]');
+    const card = (e.target as Element).closest<HTMLElement>('[data-fred]');
     if (!card) {
       if (lastHover) window.clearTimeout(dwellTimer);
       root.classList.remove('is-excited');
       lastHover = '';
       return;
     }
-    const name = card.dataset.buddy ?? '';
+    const name = card.dataset.fred ?? '';
     if (name === lastHover) return;
     lastHover = name;
     root.classList.add('is-excited');
     window.clearTimeout(dwellTimer);
 
     if (name === 'soon') {
-      tease('That one is still cooking…', 2200);
+      tease('That one is still cooking…', 2200, '');
       return;
     }
-    if (Math.random() < 0.5) tease(pick([`Ooh, ${name}!`, `${name} is one of my favourites.`]), 2200);
+    if (Math.random() < 0.5) tease(pick([`Ooh, ${name}!`, `${name} is one of my favourites.`]), 2200, 'is-jumping');
     // se ficar muito tempo em cima de um projeto, dá um empurrãozinho
     dwellTimer = window.setTimeout(() => {
       if (lastHover === name) tease('Go on, open it. I won’t tell anyone.');
@@ -369,7 +388,7 @@ if (root && returnBtn) {
   );
 
   // ---------- acenar quando chega ao contacto ----------
-  const contact = document.querySelector('[data-buddy-zone="contact"]');
+  const contact = document.querySelector('[data-fred-zone="contact"]');
   if (contact && 'IntersectionObserver' in window) {
     new IntersectionObserver(
       ([entry]) => {
@@ -386,8 +405,8 @@ if (root && returnBtn) {
   // ---------- olá inicial ----------
   window.setTimeout(() => {
     if (isHidden()) return;
-    if (!reduced) flash('is-hopping', 600);
-    say('Hi! I’m Buddy. Have a look around.', 3500);
+    if (!reduced) flash('is-waving', 2000);
+    say('Hi! I’m Fred. Have a look around.', 3500);
     lastTease = Date.now();
   }, 1400);
 

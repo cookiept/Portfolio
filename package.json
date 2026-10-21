@@ -21,12 +21,10 @@
     "@fontsource/space-grotesk": "5.2.10",
     "astro": "7.3.8",
     "react": "19.3.0",
-    "react-dom": "19.3.0",
-    "three": "0.180.0"
+    "react-dom": "19.3.0"
   },
   "devDependencies": {
     "@types/react": "19.3.0",
-    "@types/react-dom": "19.3.0",
-    "@types/three": "0.180.0"
+    "@types/react-dom": "19.3.0"
   }
 }

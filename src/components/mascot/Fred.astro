@@ -1,0 +1,683 @@
+---
+// Fred: a mascote do site, um passarinho azul. Vive no fundo do ecrã:
+// passeia de um lado para o outro (de perfil), entretém-se sozinho, segue
+// o rato com os olhos, reage aos projetos e ao contacto e mete-se com o
+// visitante de vez em quando. A lógica está em src/scripts/fred.ts.
+//
+// Poses (classes no [data-fred-root]):
+//   is-waving   acena com a asa direita
+//   is-jumping  salta com as asas abertas e o bico aberto
+//   is-sitting  sentado, com as patas à frente
+//   is-sassy    mãos (asas) na cintura
+//   is-walking  de perfil, a andar
+//   is-back     de costas
+---
+
+<div class="fred" data-fred-root>
+  <div class="fred__stage">
+    <p class="fred__bubble" aria-hidden="true"></p>
+    <button class="fred__btn" type="button" aria-label="Fred, the site mascot. Click to say hi.">
+      <svg class="fred__svg" viewBox="0 0 100 100" aria-hidden="true">
+        <defs>
+          <radialGradient id="fred-body" cx="38%" cy="26%" r="80%">
+            <stop offset="0" stop-color="#d6e6ff"></stop>
+            <stop offset="0.45" stop-color="#aac6f5"></stop>
+            <stop offset="0.85" stop-color="#87a8e6"></stop>
+            <stop offset="1" stop-color="#6d8fd4"></stop>
+          </radialGradient>
+          <radialGradient id="fred-belly" cx="45%" cy="35%" r="70%">
+            <stop offset="0" stop-color="#eef4fe"></stop>
+            <stop offset="1" stop-color="#c9daf6"></stop>
+          </radialGradient>
+          <radialGradient id="fred-wing" cx="35%" cy="25%" r="85%">
+            <stop offset="0" stop-color="#c3d8fb"></stop>
+            <stop offset="1" stop-color="#7e9fe0"></stop>
+          </radialGradient>
+          <linearGradient id="fred-orange" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#f7b06a"></stop>
+            <stop offset="1" stop-color="#d9782f"></stop>
+          </linearGradient>
+          <filter id="fred-blur" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="2.5"></feGaussianBlur>
+          </filter>
+          <!-- Peças reutilizadas nas várias vistas -->
+          <path id="fred-body-shape" d="M50 12C69 12 80 25 80 41c0 6-1.5 10-.6 14 5.6 7 6.8 16.5 3.4 24.5C78.6 88.6 66 92 50 92S21.4 88.6 17.2 79.5C13.8 71.5 15 62 20.6 55c.9-4-.6-8-.6-14C20 25 31 12 50 12z"></path>
+          <path id="fred-wing-shape" d="M0 0c-5 1.5-8.5 10.5-7 19 .8 4.5 4.2 5.2 6 1.2C1.6 13.6 3 6 0 0z"></path>
+          <path id="fred-foot-shape" d="M-8 1.5C-8.4-3.4 8.4-3.4 8 1.5c-.6 2.4-3.3 2.6-4.4 1.2-1.2 2-5.8 2-7.2 0C-4.7 4.1-7.4 3.9-8 1.5z"></path>
+          <g id="fred-crest">
+            <path d="M46.6 13.5c-2.4-3.6-2-7.4.2-8.6 1.6 2.4 2.6 5.6 2.4 8.6z"></path>
+            <path d="M49 13.2c-1-4.4.2-8.4 2.4-9.6 1.4 3 1.4 6.6 0 9.6z"></path>
+            <path d="M51.4 13.4c.8-3.6 3.4-6.2 6-6.2.2 2.8-1.8 5.6-4.4 6.8z"></path>
+          </g>
+        </defs>
+
+        <ellipse class="fred__shadow" cx="50" cy="95.5" rx="24" ry="3.6" filter="url(#fred-blur)"></ellipse>
+
+        <g class="fred__figure">
+          <!-- ===== Frente ===== -->
+          <g class="fred__view fred__front">
+            <g transform="translate(39.5 92.5) scale(1.3)"><g class="fred__foot"><use href="#fred-foot-shape" class="fred__orange"></use></g></g>
+            <g transform="translate(60.5 92.5) scale(-1.3 1.3)"><g class="fred__foot"><use href="#fred-foot-shape" class="fred__orange"></use></g></g>
+
+            <g class="fred__torso">
+              <use href="#fred-crest" class="fred__crest"></use>
+              <use href="#fred-body-shape" class="fred__body"></use>
+              <ellipse class="fred__belly" cx="50" cy="70" rx="23" ry="18"></ellipse>
+              <ellipse class="fred__gloss" cx="37" cy="23" rx="8" ry="4.5" transform="rotate(-25 37 23)" filter="url(#fred-blur)"></ellipse>
+
+              <g class="fred__eyes">
+                <g class="fred__lids">
+                  <ellipse class="fred__eye" cx="38.5" cy="40" rx="3.3" ry="3.8"></ellipse>
+                  <ellipse class="fred__eye" cx="61.5" cy="40" rx="3.3" ry="3.8"></ellipse>
+                  <circle class="fred__shine" cx="39.6" cy="38.6" r="1.1"></circle>
+                  <circle class="fred__shine" cx="62.6" cy="38.6" r="1.1"></circle>
+                </g>
+              </g>
+              <g class="fred__sleepy">
+                <path d="M35 40.5q3.5 2.6 7 0"></path>
+                <path d="M58 40.5q3.5 2.6 7 0"></path>
+              </g>
+
+              <path class="fred__beak fred__orange" d="M43.6 45.4c2.6-2 10.2-2 12.8 0-1 4-4 6.6-6.4 7.1-2.4-.5-5.4-3.1-6.4-7.1z"></path>
+              <g class="fred__beak-open">
+                <ellipse class="fred__mouth" cx="50" cy="49.8" rx="4.3" ry="2.9"></ellipse>
+                <path class="fred__orange" d="M43.6 44.4c2.6-2 10.2-2 12.8 0-1.4 2.6-4 4-6.4 4s-5-1.4-6.4-4z"></path>
+                <path class="fred__orange" d="M45.6 50.6c2 1.4 6.8 1.4 8.8 0-.8 3-2.8 4.6-4.4 4.6s-3.6-1.6-4.4-4.6z"></path>
+              </g>
+
+              <g class="fred__book">
+                <path d="M30 66l20 4.5L70 66v15l-20 4.5L30 81z"></path>
+                <path class="fred__book-line" d="M50 70.5v15"></path>
+              </g>
+
+              <g class="fred__sit-feet">
+                <g transform="translate(29 91) rotate(28) scale(1.35)"><use href="#fred-foot-shape" class="fred__orange" transform="rotate(180)"></use></g>
+                <g transform="translate(71 91) rotate(-28) scale(-1.35 1.35)"><use href="#fred-foot-shape" class="fred__orange" transform="rotate(180)"></use></g>
+              </g>
+
+              <!-- Asas: a direita é a esquerda espelhada, por isso as rotações são as mesmas -->
+              <g transform="translate(21.5 55)">
+                <g class="fred__wing fred__wing--left">
+                  <use href="#fred-wing-shape" class="fred__wing-shape"></use>
+                  <path class="fred__wing-hip" transform="scale(1.25)" d="M1-1C-7 0-12.5 6-11.8 10.6c.7 4.2 6.4 6.6 12.6 6.8 2.4 0 2.6-3.2.4-3.6-3.8-.8-6.4-2.6-6.4-4.6 0-3 2.6-5 5.4-5.8z"></path>
+                </g>
+              </g>
+              <g transform="translate(78.5 55) scale(-1 1)">
+                <g class="fred__wing fred__wing--right">
+                  <use href="#fred-wing-shape" class="fred__wing-shape"></use>
+                  <path class="fred__wing-hip" transform="scale(1.25)" d="M1-1C-7 0-12.5 6-11.8 10.6c.7 4.2 6.4 6.6 12.6 6.8 2.4 0 2.6-3.2.4-3.6-3.8-.8-6.4-2.6-6.4-4.6 0-3 2.6-5 5.4-5.8z"></path>
+                </g>
+              </g>
+            </g>
+          </g>
+
+          <!-- ===== Perfil (a andar, virado para a direita) ===== -->
+          <g class="fred__view fred__side">
+            <g transform="translate(42 92) scale(1.3)"><g class="fred__step fred__step--a"><path class="fred__orange" d="M-5 1c0-3.6 9-3.8 12-1.4 1.4 1.2.6 3-1 3H-3.4C-4.4 2.6-5 2-5 1z"></path></g></g>
+            <g transform="translate(55 92) scale(1.3)"><g class="fred__step fred__step--b"><path class="fred__orange" d="M-5 1c0-3.6 9-3.8 12-1.4 1.4 1.2.6 3-1 3H-3.4C-4.4 2.6-5 2-5 1z"></path></g></g>
+            <path class="fred__body" d="M30 70c-6.4.4-13.4-1.6-19-6.4.6 8.4 7 14.6 15.4 17.4z"></path>
+            <use href="#fred-crest" class="fred__crest" transform="translate(-2 0)"></use>
+            <path class="fred__body" d="M49 12c17 0 27 12 27 28 0 6-1.6 10-.8 14 5 7 6.4 16 3.4 24C74.8 87.6 63 92 49 92 36 92 25.2 87.8 22.4 78.8 20 71 22 62.6 26 55.6c-2.6-4.4-4-9.4-4-15.6C22 24 32 12 49 12z"></path>
+            <path class="fred__belly" d="M63 58c9 3 15.4 10 15.6 19.4C78 85 70.8 90 60.4 91 66 84 67.6 70 63 58z"></path>
+            <ellipse class="fred__gloss" cx="40" cy="23" rx="8" ry="4.5" transform="rotate(-25 40 23)" filter="url(#fred-blur)"></ellipse>
+            <ellipse class="fred__eye" cx="64" cy="39" rx="3" ry="3.7"></ellipse>
+            <circle class="fred__shine" cx="64.9" cy="37.7" r="1"></circle>
+            <path class="fred__orange" d="M74.4 41.6c3.6-.4 7.2.6 9.4 2.6-2.4 1.8-6 2.6-9.6 2.2z"></path>
+            <g transform="translate(44 57)"><g class="fred__side-wing"><path class="fred__wing-shape" d="M0 0c6.4-.4 10.6 6 10 13.4-.6 7-5.4 9.6-9 7.2C-3.6 17.6-5 3.4 0 0z"></path></g></g>
+          </g>
+
+          <!-- ===== Costas ===== -->
+          <g class="fred__view fred__back">
+            <g transform="translate(39.5 92.5) scale(1.3)"><use href="#fred-foot-shape" class="fred__orange"></use></g>
+            <g transform="translate(60.5 92.5) scale(-1.3 1.3)"><use href="#fred-foot-shape" class="fred__orange"></use></g>
+            <use href="#fred-crest" class="fred__crest"></use>
+            <use href="#fred-body-shape" class="fred__body"></use>
+            <ellipse class="fred__gloss" cx="63" cy="23" rx="8" ry="4.5" transform="rotate(25 63 23)" filter="url(#fred-blur)"></ellipse>
+            <path class="fred__tail" transform="translate(50 82) scale(1.7) translate(-50 -81)" d="M43.4 84c-.4-4 1.6-7 3.4-7.6.6 2 .6 4 .2 5.8 1-2.8 3-4.6 5-4.6.4 2.4-.6 4.6-2.2 6 2-1.6 4.4-2 6.4-1.2-1 2.6-4 4-7.2 4.2-2.4.2-4.6-.6-5.6-2.6z"></path>
+            <g transform="translate(21.5 55)"><use href="#fred-wing-shape" class="fred__wing-shape" transform="rotate(14)"></use></g>
+            <g transform="translate(78.5 55) scale(-1 1)"><use href="#fred-wing-shape" class="fred__wing-shape" transform="rotate(14)"></use></g>
+          </g>
+        </g>
+        <circle class="fred__ball" cx="50" cy="0" r="5"></circle>
+      </svg>
+    </button>
+    <button class="fred__hide" type="button" aria-label="Hide Fred">×</button>
+  </div>
+</div>
+<button class="fred-return" type="button" hidden aria-label="Bring Fred back">
+  <svg viewBox="0 0 100 100" aria-hidden="true">
+    <path d="M50 12C69 12 80 25 80 41c0 6-1.5 10-.6 14 5.6 7 6.8 16.5 3.4 24.5C78.6 88.6 66 92 50 92S21.4 88.6 17.2 79.5C13.8 71.5 15 62 20.6 55c.9-4-.6-8-.6-14C20 25 31 12 50 12z" fill="currentColor"></path>
+  </svg>
+</button>
+
+<style>
+  .fred {
+    --size: 5.5rem;
+    position: fixed;
+    left: 0;
+    bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
+    z-index: 50;
+    width: var(--size);
+    height: var(--size);
+    /* A posição horizontal (--x) é controlada pelo script */
+    transform: translateX(var(--x, calc(100vw - var(--size) - var(--space-8))));
+    transition: transform var(--walk-dur, 0s) linear;
+  }
+
+  .fred__stage {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition:
+      transform var(--dur-base) var(--ease-settle),
+      opacity var(--dur-base) var(--ease-out);
+  }
+
+  .fred.is-hidden .fred__stage {
+    transform: translateY(140%);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .fred__btn {
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .fred__btn:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 50%;
+  }
+
+  .fred__svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    transition: transform 0.25s var(--ease-out);
+  }
+
+  .fred.is-facing-left .fred__svg {
+    transform: scaleX(-1);
+  }
+
+  /* ---------- Cores ---------- */
+  .fred__body,
+  .fred__crest {
+    fill: url(#fred-body);
+  }
+
+  .fred__belly {
+    fill: url(#fred-belly);
+  }
+
+  .fred__wing-shape,
+  .fred__wing-hip,
+  .fred__tail {
+    fill: url(#fred-wing);
+  }
+
+  .fred__orange {
+    fill: url(#fred-orange);
+  }
+
+  .fred__eye {
+    fill: #14161d;
+  }
+
+  .fred__shine {
+    fill: #fff;
+  }
+
+  .fred__mouth {
+    fill: #7a3324;
+  }
+
+  .fred__gloss {
+    fill: #fff;
+    opacity: 0.45;
+  }
+
+  .fred__shadow {
+    fill: #000;
+    opacity: 0.55;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .fred__sleepy path {
+    fill: none;
+    stroke: #14161d;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+  }
+
+  .fred__book path {
+    fill: #f4f7fd;
+    stroke: var(--color-accent-deep);
+    stroke-width: 1.4;
+    stroke-linejoin: round;
+  }
+
+  .fred__ball {
+    fill: var(--color-text);
+  }
+
+  /* ---------- Vistas: só uma de cada vez ---------- */
+  .fred__side,
+  .fred__back,
+  .fred__sit-feet,
+  .fred__beak-open,
+  .fred__sleepy,
+  .fred__wing-hip,
+  .fred__book,
+  .fred__ball {
+    opacity: 0;
+  }
+
+  .fred.is-walking .fred__front,
+  .fred.is-back .fred__front {
+    opacity: 0;
+  }
+
+  .fred.is-walking .fred__side,
+  .fred.is-back:not(.is-walking) .fred__back {
+    opacity: 1;
+  }
+
+  /* ---------- Peças que mexem ---------- */
+  .fred__figure {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    transition: transform 0.4s var(--ease-settle);
+  }
+
+  .fred__torso {
+    transition: transform 0.35s var(--ease-settle);
+  }
+
+  .fred__wing {
+    transform: rotate(14deg);
+    transition: transform 0.35s var(--ease-settle);
+  }
+
+  .fred__foot {
+    transition: transform 0.35s var(--ease-settle);
+  }
+
+  .fred__eyes {
+    transition: transform 0.18s ease-out;
+  }
+
+  .fred__lids {
+    transform-box: fill-box;
+    transform-origin: center;
+    transition: transform 0.25s var(--ease-settle);
+  }
+
+  .fred__beak,
+  .fred__beak-open,
+  .fred__sit-feet,
+  .fred__wing-shape,
+  .fred__wing-hip,
+  .fred__sleepy,
+  .fred__eyes,
+  .fred__book,
+  .fred__ball {
+    transition:
+      opacity 0.15s var(--ease-out),
+      transform 0.18s ease-out;
+  }
+
+  /* Piscar */
+  .fred.is-blinking .fred__lids {
+    transform: scaleY(0.1);
+    transition-duration: 0.08s;
+  }
+
+  /* Contente (rato em cima de um projeto): olhos maiores e bico aberto */
+  .fred.is-excited .fred__lids {
+    transform: scale(1.15);
+  }
+
+  .fred.is-excited .fred__beak,
+  .fred.is-surprised .fred__beak,
+  .fred.is-jumping .fred__beak,
+  .fred.is-yawning .fred__beak {
+    opacity: 0;
+  }
+
+  .fred.is-excited .fred__beak-open,
+  .fred.is-surprised .fred__beak-open,
+  .fred.is-jumping .fred__beak-open,
+  .fred.is-yawning .fred__beak-open {
+    opacity: 1;
+  }
+
+  /* Acenar com a asa direita */
+  .fred.is-waving .fred__wing--right {
+    animation: wave 0.5s ease-in-out 4;
+  }
+
+  /* Saltar com as asas abertas */
+  .fred.is-jumping .fred__figure {
+    animation: hop 0.7s var(--ease-out);
+  }
+
+  .fred.is-jumping .fred__shadow {
+    animation: shadow-hop 0.7s var(--ease-out);
+  }
+
+  .fred.is-jumping .fred__wing,
+  .fred.is-stretching .fred__wing {
+    transform: rotate(118deg);
+  }
+
+  .fred.is-jumping .fred__foot {
+    transform: translateY(1px) rotate(-18deg);
+  }
+
+  /* Mãos na cintura */
+  .fred.is-sassy .fred__wing {
+    transform: rotate(0deg);
+  }
+
+  .fred.is-sassy .fred__wing-shape {
+    opacity: 0;
+  }
+
+  .fred.is-sassy .fred__wing-hip {
+    opacity: 1;
+  }
+
+  /* Sentado: corpo desce e as patas vão para a frente */
+  .fred.is-sitting .fred__torso {
+    transform: translateY(5px);
+  }
+
+  .fred.is-sitting .fred__foot {
+    opacity: 0;
+  }
+
+  .fred.is-sitting .fred__sit-feet {
+    opacity: 1;
+  }
+
+  .fred.is-sitting .fred__wing {
+    transform: rotate(6deg);
+  }
+
+  /* Dormir */
+  .fred.is-sleeping .fred__eyes {
+    opacity: 0;
+  }
+
+  .fred.is-sleeping .fred__sleepy {
+    opacity: 1;
+  }
+
+  .fred.is-sleeping .fred__figure,
+  .fred.is-reading .fred__figure {
+    animation: breathe 3s ease-in-out infinite;
+  }
+
+  /* Pequeno salto ao clicar (sem abrir as asas) */
+  .fred.is-hopping .fred__figure {
+    animation: hop 0.6s var(--ease-out);
+  }
+
+  .fred.is-hopping .fred__shadow {
+    animation: shadow-hop 0.6s var(--ease-out);
+  }
+
+  .fred.is-bouncing .fred__figure {
+    transform: scale(1.05, 0.95);
+  }
+
+  /* A andar, de perfil */
+  .fred.is-walking .fred__figure {
+    animation: waddle 0.42s ease-in-out infinite;
+  }
+
+  .fred__step {
+    transform-box: fill-box;
+    transform-origin: 30% 100%;
+  }
+
+  .fred.is-walking .fred__step--a {
+    animation: step 0.42s ease-in-out infinite;
+  }
+
+  .fred.is-walking .fred__step--b {
+    animation: step 0.42s ease-in-out infinite reverse;
+  }
+
+  .fred.is-walking .fred__side-wing {
+    animation: flap 0.42s ease-in-out infinite;
+  }
+
+  /* Rotinas */
+  .fred.is-stretching .fred__figure {
+    animation: stretch 1.6s var(--ease-out);
+  }
+
+  .fred.is-yawning .fred__lids {
+    transform: scaleY(0.25);
+  }
+
+  .fred.is-yawning .fred__beak-open {
+    transform-box: fill-box;
+    transform-origin: 50% 0;
+    animation: yawn 1.8s ease-in-out;
+  }
+
+  .fred.is-juggling .fred__ball {
+    opacity: 1;
+    animation: ball 0.9s ease-in-out 3;
+  }
+
+  .fred.is-reading .fred__book {
+    opacity: 1;
+  }
+
+  .fred.is-reading .fred__wing {
+    transform: rotate(-30deg);
+  }
+
+  @keyframes wave {
+    0%,
+    100% {
+      transform: rotate(150deg);
+    }
+    50% {
+      transform: rotate(118deg);
+    }
+  }
+
+  @keyframes hop {
+    40% {
+      transform: translateY(-26%) scale(0.95, 1.05);
+    }
+    75% {
+      transform: translateY(0) scale(1.08, 0.92);
+    }
+  }
+
+  @keyframes shadow-hop {
+    40% {
+      transform: scale(0.6);
+    }
+  }
+
+  @keyframes breathe {
+    50% {
+      transform: scale(1.03, 0.97);
+    }
+  }
+
+  @keyframes waddle {
+    25% {
+      transform: translateY(-4%) rotate(-3deg);
+    }
+    50% {
+      transform: translateY(0) rotate(0deg);
+    }
+    75% {
+      transform: translateY(-4%) rotate(3deg);
+    }
+  }
+
+  @keyframes step {
+    0%,
+    100% {
+      transform: translate(-3px, 0) rotate(0deg);
+    }
+    50% {
+      transform: translate(3px, -3px) rotate(-12deg);
+    }
+  }
+
+  @keyframes flap {
+    50% {
+      transform: rotate(-10deg);
+    }
+  }
+
+  @keyframes stretch {
+    40%,
+    60% {
+      transform: scale(0.95, 1.1);
+    }
+  }
+
+  @keyframes yawn {
+    40%,
+    70% {
+      transform: scale(1.2, 1.5);
+    }
+  }
+
+  @keyframes ball {
+    0%,
+    100% {
+      transform: translateY(12px);
+    }
+    50% {
+      transform: translateY(-22px);
+    }
+  }
+
+  /* ---------- Balão de fala ---------- */
+  .fred__bubble {
+    position: absolute;
+    right: 30%;
+    bottom: calc(100% + var(--space-2));
+    width: max-content;
+    max-width: min(15rem, 70vw);
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-line-strong);
+    border-radius: 14px 14px 4px 14px;
+    background: var(--color-surface-2);
+    color: var(--color-text);
+    font-size: var(--text-sm);
+    line-height: 1.35;
+    opacity: 0;
+    transform: translateY(0.5rem) scale(0.95);
+    transform-origin: 100% 100%;
+    pointer-events: none;
+    transition:
+      opacity var(--dur-fast) var(--ease-out),
+      transform var(--dur-fast) var(--ease-out);
+  }
+
+  .fred.is-left .fred__bubble {
+    right: auto;
+    left: 30%;
+    border-radius: 14px 14px 14px 4px;
+    transform-origin: 0 100%;
+  }
+
+  .fred__bubble.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* ---------- Esconder / voltar ---------- */
+  .fred__hide {
+    position: absolute;
+    top: -0.25rem;
+    right: -0.25rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 1px solid var(--color-line-strong);
+    border-radius: 50%;
+    background: var(--color-surface-2);
+    color: var(--color-text-2);
+    font-size: 0.9rem;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity var(--dur-fast) var(--ease-out);
+  }
+
+  .fred:hover .fred__hide,
+  .fred__hide:focus-visible {
+    opacity: 1;
+  }
+
+  .fred-return {
+    position: fixed;
+    right: calc(var(--space-6) + env(safe-area-inset-right, 0px));
+    bottom: 0;
+    z-index: 50;
+    width: 2.75rem;
+    height: 1.5rem;
+    padding: 0.35rem 0.6rem 0;
+    border: 1px solid var(--color-line-strong);
+    border-bottom: 0;
+    border-radius: 12px 12px 0 0;
+    background: var(--color-surface-2);
+    color: var(--color-accent);
+    cursor: pointer;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-sizing: content-box;
+  }
+
+  .fred-return svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  @media (hover: none) {
+    .fred__hide {
+      opacity: 0.8;
+    }
+  }
+
+  @media (max-width: 40rem) {
+    .fred {
+      --size: 4.25rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fred *,
+    .fred {
+      animation: none !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
+
+<script>
+  import '../../scripts/fred';
+</script>
