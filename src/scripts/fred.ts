@@ -3,9 +3,10 @@
 // as páginas. Não passeia pela página (para não tapar os projetos): fica no
 // ninho, entretém-se com pequenas rotinas, segue o rato com os olhos e
 // encolhe-se quando um projeto passa por trás dele.
-// Ao clicar é útil: na página inicial abre atalhos; nas páginas de projeto
-// abre o guia das secções, com quanto falta ler e o projeto seguinte.
-import { withBase } from '../utils/url';
+// No ninho há um ovo por projeto: abrir um projeto choca o ovo dele (fica
+// guardado no browser) e ver todos dá um ovo dourado. Nos case studies,
+// quando um ecrã com nota ([data-fred-note]) aparece, conta a curiosidade.
+import type { EggState, Nest } from './fred3d';
 
 const root = document.querySelector<HTMLElement>('[data-fred-root]');
 const returnBtn = document.querySelector<HTMLButtonElement>('.fred-return');
@@ -15,21 +16,26 @@ if (root && returnBtn) {
   const hideBtn = root.querySelector<HTMLButtonElement>('.fred__hide')!;
   const bubble = root.querySelector<HTMLElement>('.fred__bubble')!;
   const eyes = root.querySelector<SVGGElement>('.fred__eyes')!;
-  const menu = root.querySelector<HTMLElement>('.fred__menu')!;
-  const menuTitle = menu.querySelector<HTMLElement>('.fred__menu-title')!;
-  const menuList = menu.querySelector<HTMLElement>('.fred__menu-list')!;
-  const menuProgress = menu.querySelector<HTMLElement>('.fred__menu-progress')!;
   const nests = [...document.querySelectorAll<HTMLElement>('[data-fred-nest]')];
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const IDLE_MS = 45000; // adormece ao fim deste tempo sem mexer
   const TEASE_GAP_MS = 15000; // intervalo mínimo entre comentários automáticos
   const STORAGE_KEY = 'fred-hidden';
+  const EGGS_KEY = 'fred-hatched';
 
-  // Secções do case study (só existem nas páginas de projeto)
-  const sections = [...document.querySelectorAll<HTMLElement>('[data-fred-section]')];
-  const nextLink = document.querySelector<HTMLAnchorElement>('.case__next a');
-  const isCase = sections.length > 0;
+  // Ovos: um por projeto, pela ordem da página inicial
+  const projects = (root.dataset.projects ?? '').split(',').filter(Boolean);
+  const slugOf = (href: string) => /\/projects\/([^/?#]+)/.exec(href)?.[1] ?? '';
+  const current = slugOf(window.location.pathname);
+  const isCase = projects.includes(current);
+  const hatched = new Set<string>();
+  try {
+    JSON.parse(localStorage.getItem(EGGS_KEY) ?? '[]').forEach((id: string) => projects.includes(id) && hatched.add(id));
+  } catch {
+    /* sem armazenamento: começa sempre do zero */
+  }
+  let nest: Nest | null = null;
 
   let bubbleTimer = 0;
   let idleTimer = 0;
@@ -41,7 +47,6 @@ if (root && returnBtn) {
   let lastTease = 0;
   let saidLeaving = false;
   let lastDodge = 0;
-  let menuOpen = false;
 
   const isHidden = () => root.classList.contains('is-hidden');
   const wait = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
@@ -57,7 +62,6 @@ if (root && returnBtn) {
   };
 
   const say = (text: string, ms = 2800) => {
-    if (menuOpen) return; // o menu já está a ocupar o espaço do balão
     bubble.textContent = text;
     bubble.classList.add('is-visible');
     window.clearTimeout(bubbleTimer);
@@ -68,7 +72,7 @@ if (root && returnBtn) {
   // Por defeito põe as mãos na cintura enquanto fala.
   const tease = (text: string, ms = 2600, pose = 'is-sassy') => {
     const now = Date.now();
-    if (!ready || isHidden() || sleeping || menuOpen || now - lastTease < TEASE_GAP_MS) return false;
+    if (!ready || isHidden() || sleeping || now - lastTease < TEASE_GAP_MS) return false;
     if (bubble.classList.contains('is-visible')) return false;
     lastTease = now;
     say(text, ms);
@@ -110,7 +114,6 @@ if (root && returnBtn) {
   let duckFrame = 0;
   const checkDuck = () => {
     duckFrame = 0;
-    if (menuOpen) return root.classList.remove('is-ducking');
     const me = root.getBoundingClientRect();
     const over = blockers.some((el) => {
       const r = el.getBoundingClientRect();
@@ -196,7 +199,7 @@ if (root && returnBtn) {
   };
 
   const runRoutine = async () => {
-    if (!reduced && !busy && !sleeping && !menuOpen && !isHidden() && !document.hidden) {
+    if (!reduced && !busy && !sleeping && !isHidden() && !document.hidden) {
       busy = true;
       try {
         await routines[pickRoutine()]();
@@ -209,7 +212,7 @@ if (root && returnBtn) {
 
   // ---------- adormecer / acordar ----------
   const fallAsleep = () => {
-    if (isHidden() || busy || menuOpen) {
+    if (isHidden() || busy) {
       idleTimer = window.setTimeout(fallAsleep, IDLE_MS);
       return;
     }
@@ -234,78 +237,90 @@ if (root && returnBtn) {
     window.setTimeout(blinkLoop, 2500 + Math.random() * 3500);
   };
 
-  // ---------- menu: atalhos ou guia ----------
-  const link = (label: string, href: string, cls = '') => {
-    const li = document.createElement('li');
-    const a = document.createElement('a');
-    a.textContent = label;
-    a.href = href;
-    if (cls) a.className = cls;
-    li.appendChild(a);
-    menuList.appendChild(li);
-    return a;
+  // ---------- ovos ----------
+  const eggStates = (): EggState[] => projects.map((id) => (hatched.has(id) ? 'hatched' : 'egg'));
+  const allHatched = () => projects.length > 0 && hatched.size >= projects.length;
+  const drawEggs = () => nest?.setEggs(eggStates(), allHatched());
+  const saveEggs = () => {
+    try {
+      localStorage.setItem(EGGS_KEY, JSON.stringify([...hatched]));
+    } catch {
+      /* ignora */
+    }
   };
 
-  const sectionLinks: HTMLAnchorElement[] = [];
-  if (isCase) {
-    menuTitle.textContent = 'On this page';
-    link('Overview', '#top');
-    sections.forEach((el, i) => {
-      if (!el.id) el.id = `section-${i + 1}`;
-      sectionLinks.push(link(el.dataset.fredSection ?? '', `#${el.id}`));
-    });
-    if (nextLink) link(`Next: ${nextLink.querySelector('.case__next-title')?.textContent?.replace('→', '').trim() ?? ''} →`, nextLink.href, 'is-next');
-    menuProgress.hidden = false;
-  } else {
-    menuTitle.textContent = 'Where to?';
-    const home = document.querySelector('#work') ? '' : withBase('/');
-    link('See the projects', `${home}#work`);
-    link('Get in touch', `${home}#contact`);
-    link('Back to the top', '#top');
+  // Ao abrir um projeto pela primeira vez, o ovo dele choca
+  const hatchCurrent = async () => {
+    if (!isCase || hatched.has(current)) return false;
+    await wait(1600);
+    hatched.add(current);
+    saveEggs();
+    drawEggs();
+    if (!reduced) flash('is-jumping', 700);
+    say(`Crack! An egg hatched. ${hatched.size} of ${projects.length} projects seen.`, 3800);
+    lastTease = Date.now();
+    if (allHatched()) {
+      await wait(4200);
+      if (!reduced) flash('is-waving', 2400);
+      say('You’ve seen every project! Here’s a golden egg. Maybe say hi to Gonçalo?', 5000);
+      lastTease = Date.now();
+    }
+    return true;
+  };
+
+  const clickLines = () => {
+    if (allHatched()) return ['You’ve seen them all. You’re my favourite visitor!', 'Shiny, isn’t it? That golden egg is yours.'];
+    const left = projects.length - hatched.size;
+    return [
+      `${hatched.size} of ${projects.length} eggs hatched. Open a project to hatch another!`,
+      `${left} egg${left === 1 ? '' : 's'} left in my nest.`,
+      'Hehe, that tickles.',
+    ];
+  };
+  let clicks = 0;
+
+  // ---------- notas do Fred nos case studies ----------
+  // Cada ecrã com [data-fred-note] conta a sua curiosidade uma vez,
+  // quando fica bem à vista.
+  const NOTE_GAP_MS = 6000;
+  let lastNote = 0;
+  const notes = [...document.querySelectorAll<HTMLElement>('[data-fred-note]')];
+  if (notes.length && 'IntersectionObserver' in window) {
+    const visible = new Set<Element>();
+    const tryNote = (el: HTMLElement) => {
+      if (!visible.has(el)) return;
+      const now = Date.now();
+      if (!ready || isHidden() || bubble.classList.contains('is-visible') || now - lastNote < NOTE_GAP_MS) {
+        window.setTimeout(() => tryNote(el), 1500);
+        return;
+      }
+      noteObserver.unobserve(el);
+      visible.delete(el);
+      lastNote = lastTease = now;
+      wakeUp();
+      root.classList.remove('is-ducking');
+      if (!reduced) flash('is-hopping', 600);
+      say(el.dataset.fredNote ?? '', 5200);
+    };
+    const noteObserver = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            visible.add(entry.target);
+            tryNote(entry.target as HTMLElement);
+          } else visible.delete(entry.target);
+        }
+      },
+      { threshold: 0.6 },
+    );
+    notes.forEach((el) => noteObserver.observe(el));
   }
-
-  // Secção atual e quanto falta ler
-  const updateGuide = () => {
-    if (!isCase) return;
-    const max = document.documentElement.scrollHeight - window.innerHeight;
-    menu.style.setProperty('--read', String(max > 0 ? Math.min(1, window.scrollY / max) : 1));
-    let current = -1;
-    sections.forEach((el, i) => {
-      if (el.getBoundingClientRect().top < window.innerHeight * 0.45) current = i;
-    });
-    sectionLinks.forEach((a, i) => a.classList.toggle('is-current', i === current));
-  };
-
-  const setMenu = (open: boolean) => {
-    menuOpen = open;
-    menu.hidden = !open;
-    btn.setAttribute('aria-expanded', String(open));
-    if (open) {
-      bubble.classList.remove('is-visible');
-      updateGuide();
-    }
-    queueDuck();
-  };
-
-  menuList.addEventListener('click', (e) => {
-    if ((e.target as Element).closest('a')) setMenu(false);
-  });
-  document.addEventListener('click', (e) => {
-    if (menuOpen && !root.contains(e.target as Node)) setMenu(false);
-  });
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && menuOpen) {
-      setMenu(false);
-      btn.focus();
-    }
-  });
 
   // ---------- mostrar / esconder ----------
   const setHidden = (hidden: boolean) => {
     root.classList.toggle('is-hidden', hidden);
     nests.forEach((n) => n.classList.toggle('is-away', hidden));
     returnBtn.hidden = !hidden;
-    if (hidden) setMenu(false);
     try {
       if (hidden) localStorage.setItem(STORAGE_KEY, '1');
       else localStorage.removeItem(STORAGE_KEY);
@@ -333,8 +348,10 @@ if (root && returnBtn) {
   btn.addEventListener('click', () => {
     wakeUp();
     root.classList.remove('is-sitting');
-    if (!reduced) flash('is-hopping', 600);
-    setMenu(!menuOpen);
+    if (!reduced) flash('is-jumping', 700);
+    const lines = clickLines();
+    say(lines[clicks % lines.length], 3200);
+    clicks++;
   });
 
   // ---------- rato: olhos, e encolhe-se se chegarem muito perto ----------
@@ -344,13 +361,13 @@ if (root && returnBtn) {
       wakeUp();
       lookAt(e.clientX, e.clientY);
 
-      if (reduced || busy || menuOpen || isHidden() || e.pointerType !== 'mouse') return;
+      if (reduced || busy || isHidden() || e.pointerType !== 'mouse') return;
       const r = btn.getBoundingClientRect();
       const dist = Math.hypot(e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2));
       const now = Date.now();
       if (dist < r.width * 0.9 && dist > r.width * 0.55 && now - lastDodge > 45000) {
         lastDodge = now;
-        tease(pick(['Hey, personal space!', 'Whoa, careful!', 'Click me, I know my way around.']));
+        tease(pick(['Hey, personal space!', 'Whoa, careful!', 'You can click me, you know.']));
       }
     },
     { passive: true },
@@ -394,7 +411,9 @@ if (root && returnBtn) {
       tease('That one is still cooking…', 2200, '');
       return;
     }
-    if (Math.random() < 0.5) tease(pick([`Ooh, ${name}!`, `${name} is one of my favourites.`]), 2200, 'is-jumping');
+    const slug = slugOf(card.querySelector('a')?.getAttribute('href') ?? '');
+    if (slug && !hatched.has(slug)) tease(pick(['Open it to hatch an egg!', `${name} has an egg waiting.`]), 2400, 'is-jumping');
+    else if (Math.random() < 0.5) tease(pick([`Ooh, ${name}!`, `${name} is one of my favourites.`]), 2200, 'is-jumping');
     // se ficar muito tempo em cima de um projeto, dá um empurrãozinho
     dwellTimer = window.setTimeout(() => {
       if (lastHover === name) tease('Go on, open it. I won’t tell anyone.');
@@ -410,7 +429,6 @@ if (root && returnBtn) {
     () => {
       wakeUp();
       queueDuck();
-      if (menuOpen) updateGuide();
       const y = window.scrollY;
       const t = performance.now();
       const speed = Math.abs(y - lastY) / Math.max(1, t - lastT); // px por ms
@@ -472,18 +490,28 @@ if (root && returnBtn) {
   // ---------- arranque: só depois de o Fred estar à vista ----------
   root.addEventListener(
     'fred:ready',
-    () => {
+    async (e) => {
       ready = true;
+      nest = (e as CustomEvent<{ nest: Nest | null }>).detail?.nest ?? null;
       placeHome();
       checkDuck();
-      if (!isHidden()) {
-        if (!reduced) flash('is-waving', 2000);
-        say(isCase ? 'Click me for a map of this page.' : 'Hi! I’m Fred. Click me if you get lost.', 3500);
-        lastTease = Date.now();
-      }
+      drawEggs();
       idleTimer = window.setTimeout(fallAsleep, IDLE_MS);
       blinkLoop();
       window.setTimeout(runRoutine, 12000);
+      if (isHidden()) return;
+      if (await hatchCurrent()) return;
+      if (!reduced) flash('is-waving', 2000);
+      const left = projects.length - hatched.size;
+      say(
+        hatched.size === 0
+          ? 'Hi! I’m Fred. Open a project to hatch one of my eggs.'
+          : left > 0
+            ? `Welcome back! ${left} egg${left === 1 ? '' : 's'} still to hatch.`
+            : 'Hi again, golden egg finder!',
+        3800,
+      );
+      lastTease = Date.now();
     },
     { once: true },
   );

@@ -14,11 +14,11 @@ const projects = defineCollection({
       // Texto: título da secção + parágrafos (markdown simples não é preciso)
       z.object({ type: z.literal('text'), eyebrow: z.string().optional(), title: z.string(), body: z.array(z.string()) }),
       // Uma imagem grande com legenda
-      z.object({ type: z.literal('figure'), image: shot, caption: z.string().optional() }),
+      z.object({ type: z.literal('figure'), image: shot, caption: z.string().optional(), note: z.string().optional() }),
       // Grelha de ecrãs (2 ou 3 colunas)
-      z.object({ type: z.literal('grid'), columns: z.union([z.literal(2), z.literal(3)]).default(2), images: z.array(shot), caption: z.string().optional() }),
+      z.object({ type: z.literal('grid'), columns: z.union([z.literal(2), z.literal(3)]).default(2), images: z.array(shot), caption: z.string().optional(), note: z.string().optional() }),
       // Páginas compridas lado a lado (scroll horizontal no telemóvel)
-      z.object({ type: z.literal('tall'), images: z.array(shot), caption: z.string().optional() }),
+      z.object({ type: z.literal('tall'), images: z.array(shot), caption: z.string().optional(), note: z.string().optional() }),
       // Passos numerados
       z.object({ type: z.literal('steps'), title: z.string(), steps: z.array(z.object({ title: z.string(), text: z.string() })) }),
       // Sistema visual: cores e tipos de letra

@@ -1,8 +1,9 @@
 ---
 // Fred: a mascote do site, um passarinho azul em 3D (src/scripts/fred3d.ts),
 // com uma versão em SVG se não houver WebGL. Vive num ninho 3D no canto
-// inferior direito, sempre no mesmo sítio em todas as páginas. Ao clicar
-// abre atalhos (página inicial) ou o guia das secções (páginas de projeto).
+// inferior direito, sempre no mesmo sítio em todas as páginas. No ninho há
+// um ovo por projeto: abrir um projeto choca o ovo, e ver todos dá uma
+// surpresa. Nos case studies conta curiosidades sobre os ecrãs (notas).
 // Encolhe-se no ninho quando um projeto passa por trás dele.
 // A lógica está em src/scripts/fred.ts.
 //
@@ -13,18 +14,19 @@
 //   is-sassy    mãos (asas) na cintura
 //   is-walking  de perfil, a andar
 //   is-back     de costas
+import { getCollection } from 'astro:content';
+
+// Um ovo por projeto publicado
+const projects = (await getCollection('projects', ({ data }) => !data.placeholder))
+  .sort((a, b) => a.data.order - b.data.order)
+  .map((p) => p.id);
 ---
 
 <div class="fred-nest fred-nest--back" data-fred-nest="back" aria-hidden="true"></div>
-<div class="fred is-booting is-nesting" data-fred-root>
+<div class="fred is-booting is-nesting" data-fred-root data-projects={projects.join(',')}>
   <div class="fred__stage">
     <p class="fred__bubble" aria-hidden="true"></p>
-    <div class="fred__menu" id="fred-menu" hidden>
-      <p class="fred__menu-title"></p>
-      <ul class="fred__menu-list"></ul>
-      <div class="fred__menu-progress" hidden><span></span></div>
-    </div>
-    <button class="fred__btn" type="button" aria-label="Fred, the site guide" aria-expanded="false" aria-controls="fred-menu">
+    <button class="fred__btn" type="button" aria-label="Fred, the site mascot. Click to say hi.">
       <svg class="fred__svg" viewBox="0 0 100 100" aria-hidden="true">
         <defs>
           <radialGradient id="fred-body" cx="38%" cy="26%" r="80%">
@@ -734,108 +736,6 @@
     opacity: 0;
   }
 
-  /* ---------- Menu: atalhos ou guia da página ---------- */
-  .fred__menu {
-    position: absolute;
-    right: 10%;
-    bottom: calc(100% + var(--space-3));
-    width: min(16rem, calc(100vw - 2rem));
-    padding: var(--space-4);
-    border: 1px solid var(--color-line-strong);
-    border-radius: 18px 18px 4px 18px;
-    background: rgb(17 19 26 / 0.92);
-    backdrop-filter: blur(12px);
-    box-shadow: 0 20px 40px -12px rgb(0 0 0 / 0.6);
-    transform-origin: 100% 100%;
-    animation: menu-in 0.25s var(--ease-out);
-  }
-
-  .fred__menu[hidden] {
-    display: none;
-  }
-
-  .fred__menu-title {
-    margin-bottom: var(--space-2);
-    font-size: var(--text-sm);
-    color: var(--color-text-2);
-  }
-
-  .fred__menu-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    gap: 2px;
-  }
-
-  .fred__menu-list :global(a) {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    padding: var(--space-2) var(--space-3);
-    border-radius: 10px;
-    color: var(--color-text);
-    text-decoration: none;
-    font-size: var(--text-sm);
-  }
-
-  .fred__menu-list :global(a::before) {
-    content: '';
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--color-line-strong);
-    flex: none;
-  }
-
-  .fred__menu-list :global(a:hover),
-  .fred__menu-list :global(a:focus-visible) {
-    background: var(--color-surface-2);
-  }
-
-  .fred__menu-list :global(a.is-current) {
-    color: var(--color-accent);
-  }
-
-  .fred__menu-list :global(a.is-current::before) {
-    background: var(--color-accent);
-    box-shadow: 0 0 8px var(--color-accent);
-  }
-
-  .fred__menu-list :global(a.is-next) {
-    margin-top: var(--space-2);
-    border-top: 1px solid var(--color-line);
-    border-radius: 0 0 10px 10px;
-    padding-top: var(--space-3);
-  }
-
-  .fred__menu-list :global(a.is-next::before) {
-    display: none;
-  }
-
-  .fred__menu-progress {
-    height: 3px;
-    margin-top: var(--space-3);
-    border-radius: 3px;
-    background: var(--color-line);
-    overflow: hidden;
-  }
-
-  .fred__menu-progress span {
-    display: block;
-    height: 100%;
-    width: calc(var(--read, 0) * 100%);
-    background: var(--color-accent);
-    transition: width 0.2s linear;
-  }
-
-  @keyframes menu-in {
-    from {
-      opacity: 0;
-      transform: translateY(0.5rem) scale(0.95);
-    }
-  }
-
   .fred-return {
     position: fixed;
     right: calc(var(--space-6) + env(safe-area-inset-right, 0px));
@@ -892,23 +792,24 @@
   const nestFront = document.querySelector<HTMLElement>('[data-fred-nest="front"]');
   if (root && nestBack && nestFront) {
     let done = false;
-    const ready = (nest: boolean) => {
+    // `nest` é o ninho 3D (com os ovos), ou null quando fica só o SVG
+    const ready = (nest: import('../../scripts/fred3d').Nest | null) => {
       if (done) return;
       done = true;
       root.classList.remove('is-booting');
       if (nest) [nestBack, nestFront].forEach((el) => el.classList.add('is-ready'));
       root.dispatchEvent(new CustomEvent('fred:ready', { detail: { nest } }));
     };
-    const fallback = window.setTimeout(() => ready(false), 6000);
+    const fallback = window.setTimeout(() => ready(null), 6000);
     import('../../scripts/fred3d')
       .then((m) => {
         if (done) return; // já se mostrou o SVG: não troca a meio
         const ok = m.mountFred3D(root);
-        const nest = ok && m.mountNest(nestBack, nestFront);
+        const nest = ok ? m.mountNest(nestBack, nestFront) : null;
         window.clearTimeout(fallback);
         // espera um frame para o primeiro desenho do 3D já estar no ecrã
-        requestAnimationFrame(() => requestAnimationFrame(() => ready(!!nest)));
+        requestAnimationFrame(() => requestAnimationFrame(() => ready(nest)));
       })
-      .catch(() => ready(false));
+      .catch(() => ready(null));
   }
 </script>

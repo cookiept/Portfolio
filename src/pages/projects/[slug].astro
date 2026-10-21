@@ -72,14 +72,14 @@ const shotWidths = [600, 1000, 1512];
               );
             if (b.type === 'figure')
               return (
-                <figure class="b-figure" data-reveal>
+                <figure class="b-figure" data-reveal data-fred-note={b.note}>
                   <Image src={b.image.src} alt={b.image.alt} widths={shotWidths} quality={90} sizes="(max-width: 80rem) 100vw, 80rem" />
                   {b.caption && <figcaption>{b.caption}</figcaption>}
                 </figure>
               );
             if (b.type === 'grid')
               return (
-                <figure class="b-grid" data-reveal>
+                <figure class="b-grid" data-reveal data-fred-note={b.note}>
                   <div class="b-grid__items" style={`--cols:${b.columns}`}>
                     {b.images.map((s) => (
                       <div class="shot">
@@ -93,7 +93,7 @@ const shotWidths = [600, 1000, 1512];
               );
             if (b.type === 'tall')
               return (
-                <figure class="b-tall" data-reveal>
+                <figure class="b-tall" data-reveal data-fred-note={b.note}>
                   <div class="b-tall__items">
                     {b.images.map((s) => (
                       <div class="shot">

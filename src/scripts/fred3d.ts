@@ -460,7 +460,13 @@ export function mountFred3D(root: HTMLElement) {
 // O ninho fica parado no canto e é desenhado em duas camadas: a de trás
 // (por trás do Fred) e a da frente (à frente das patas), para ele parecer
 // sentado lá dentro. Só se volta a desenhar quando muda de tamanho.
-export function mountNest(backEl: HTMLElement, frontEl: HTMLElement) {
+export type EggState = 'egg' | 'hatched';
+export interface Nest {
+  // um estado por projeto; `golden` mostra o ovo dourado da surpresa
+  setEggs(eggs: EggState[], golden: boolean): void;
+}
+
+export function mountNest(backEl: HTMLElement, frontEl: HTMLElement): Nest | null {
   const layers = [backEl, frontEl].map((el) => {
     const canvas = document.createElement('canvas');
     canvas.setAttribute('aria-hidden', 'true');
@@ -485,7 +491,7 @@ export function mountNest(backEl: HTMLElement, frontEl: HTMLElement) {
     scene.add(rim);
     return { el, canvas, renderer, scene };
   });
-  if (layers.some((l) => !l)) return false;
+  if (layers.some((l) => !l)) return null;
   const [back, front] = layers as NonNullable<(typeof layers)[number]>[];
 
   const camera = new THREE.PerspectiveCamera(26, 2, 0.1, 50);
@@ -612,5 +618,75 @@ export function mountNest(backEl: HTMLElement, frontEl: HTMLElement) {
   };
   draw();
   new ResizeObserver(draw).observe(back.el);
-  return true;
+
+  // ---------- ovos ----------
+  // Ficam à volta do Fred, na borda da frente do ninho. Um ovo inteiro é
+  // um projeto por abrir; uma casca partida é um projeto já visto.
+  const eggMat = new THREE.MeshStandardMaterial({ color: 0xf3ead8, roughness: 0.55 });
+  const insideMat = new THREE.MeshStandardMaterial({ color: 0xe6dcc6, roughness: 0.8, side: THREE.BackSide });
+  const goldMat = new THREE.MeshStandardMaterial({ color: 0xf2c14e, roughness: 0.25, metalness: 0.85, emissive: 0x4a3200 });
+  const speckMat = new THREE.MeshStandardMaterial({ color: 0x8a6f52, roughness: 0.9 });
+  const eggGeo = new THREE.SphereGeometry(1, 24, 18);
+  const lowerGeo = new THREE.SphereGeometry(1, 24, 12, 0, Math.PI * 2, Math.PI * 0.45, Math.PI * 0.55);
+  const capGeo = new THREE.SphereGeometry(1, 24, 8, 0, Math.PI * 2, 0, Math.PI * 0.4);
+  const speckGeo = new THREE.SphereGeometry(1, 6, 4);
+  const EGG = new THREE.Vector3(0.155, 0.2, 0.155);
+
+  // Lugares na borda, da esquerda para a direita (o Fred está no meio)
+  const spots = [
+    [-1.0, 0.18], [-0.78, 0.5], [0.78, 0.5], [1.0, 0.18], [-0.42, 0.72], [0.42, 0.72], [-1.08, -0.15], [1.08, -0.15],
+  ];
+  const eggGroup = new THREE.Group();
+  front.scene.add(eggGroup);
+
+  const makeEgg = (state: EggState, i: number) => {
+    const g = new THREE.Group();
+    if (state === 'egg') {
+      const egg = new THREE.Mesh(eggGeo, eggMat);
+      egg.scale.copy(EGG);
+      g.add(egg);
+      // pintinhas
+      for (let k = 0; k < 7; k++) {
+        const sp = new THREE.Mesh(speckGeo, speckMat);
+        const a = (k / 7) * Math.PI * 2 + i;
+        const y = (((k * 37 + i * 11) % 10) / 10 - 0.4) * 0.22;
+        sp.position.set(Math.cos(a) * 0.15, y, Math.sin(a) * 0.15);
+        sp.scale.setScalar(0.014);
+        g.add(sp);
+      }
+      g.rotation.z = (i % 2 ? 1 : -1) * 0.25;
+    } else {
+      // casca de baixo aberta e a tampa caída ao lado
+      const lower = new THREE.Mesh(lowerGeo, eggMat);
+      lower.scale.copy(EGG);
+      const inside = new THREE.Mesh(lowerGeo, insideMat);
+      inside.scale.copy(EGG).multiplyScalar(0.96);
+      g.add(lower, inside);
+      const cap = new THREE.Mesh(capGeo, eggMat);
+      cap.scale.copy(EGG);
+      cap.position.set(i % 2 ? -0.16 : 0.16, -0.06, 0.08);
+      cap.rotation.z = (i % 2 ? 1 : -1) * 1.9;
+      g.add(cap);
+    }
+    return g;
+  };
+
+  return {
+    setEggs(eggs, golden) {
+      eggGroup.clear();
+      eggs.slice(0, spots.length).forEach((state, i) => {
+        const [x, z] = spots[i];
+        const e = makeEgg(state, i);
+        e.position.set(x, (state === 'egg' ? 0.53 : 0.5) + (z < 0 ? 0.05 : 0), z);
+        eggGroup.add(e);
+      });
+      if (golden) {
+        const gold = new THREE.Mesh(eggGeo, goldMat);
+        gold.scale.copy(EGG).multiplyScalar(1.25);
+        gold.position.set(0, 0.5, 0.82);
+        eggGroup.add(gold);
+      }
+      draw();
+    },
+  };
 }

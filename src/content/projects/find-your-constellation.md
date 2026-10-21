@@ -33,6 +33,7 @@ blocks:
       src: ../../assets/projects/constellation/start.jpg
       alt: Start screen with the title Find Your Constellation floating over a night sky with creative fields as planets
     caption: The start screen. Creative fields float as planets; you can begin the journey or skip and explore the roles.
+    note: Psst, those planets are creative fields. I like the purple one.
   - type: steps
     title: How it works
     steps:
@@ -60,6 +61,7 @@ blocks:
         alt: Question 4, how do you usually approach a new design challenge
         label: 4 / 6
     caption: Each question orbits a central star. A new ring appears with every answer, and the progress line at the bottom fills like a light trail.
+    note: Every answer adds a new ring around the star. Count them!
   - type: grid
     columns: 2
     images:
@@ -70,6 +72,7 @@ blocks:
         alt: Rate your proficiency screen with one slider per skill
         label: 6 / 6
     caption: Skills are free text, so a designer who also cooks or codes can say so. The ratings decide how bright each star shines.
+    note: Free text skills! Someone could even write 'nest building'.
   - type: text
     eyebrow: The result
     title: Four clusters, one map each
@@ -90,6 +93,7 @@ blocks:
       - src: ../../assets/projects/constellation/result-uxui.jpg
         alt: UX/UI Designer cluster result page
         label: UX/UI Designer
+    note: Four clusters, four skies. Each one got its own colour.
   - type: text
     eyebrow: Beyond the result
     title: More than a label
