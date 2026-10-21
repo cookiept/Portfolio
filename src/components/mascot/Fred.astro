@@ -15,6 +15,11 @@
 //   is-sassy    mãos (asas) na cintura
 //   is-walking  de perfil, a andar
 //   is-back     de costas
+//   is-drowsy   a cabecear com sono (antes de adormecer)
+//   is-sleeping a dormir, com bolhinhas "z"
+//   is-preening arranja as penas debaixo da asa
+//   is-dancing  dança com notas de música
+//   is-shaking  sacode as penas (ao acordar)
 import { site } from '@data/site';
 import { withBase } from '../../utils/url';
 
@@ -22,7 +27,6 @@ const { instagram, linkedin, cv } = site.links;
 
 // Adereço 3D em cada case study (ver addAccessory em src/scripts/fred3d.ts)
 const ACCESSORIES: Record<string, string> = {
-  'find-your-constellation': 'stars',
   pinnie: 'pin',
   petsight: 'collar',
   glowai: 'plant',
@@ -43,6 +47,7 @@ const accessory = ACCESSORIES[slug] ?? '';
 </svg>
 <div class="fred is-booting is-nesting" data-fred-root data-accessory={accessory}>
   <div class="fred__stage">
+    <div class="fred__puffs" aria-hidden="true"></div>
     <p class="fred__float fred__bubble" aria-hidden="true"><span class="fred__liquid" aria-hidden="true"><span class="fred__blob"></span><span class="fred__drop"></span><span class="fred__drop fred__drop--2"></span></span><span class="fred__text"></span></p>
     <div class="fred__float fred__panel" id="fred-contact" inert>
       <span class="fred__liquid" aria-hidden="true"><span class="fred__blob"></span><span class="fred__drop"></span><span class="fred__drop fred__drop--2"></span></span>
@@ -793,6 +798,59 @@ const accessory = ACCESSORIES[slug] ?? '';
     }
     60% {
       transform: scale(0.98, 1.03);
+    }
+  }
+
+  /* ---------- Bolhinhas "z" e notas de música ---------- */
+  .fred__puffs {
+    position: absolute;
+    right: 22%;
+    bottom: 82%;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+  }
+
+  .fred__puffs :global(.fred__puff) {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    display: grid;
+    place-items: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    background:
+      radial-gradient(120% 80% at 25% 0%, rgb(169 200 255 / 0.32), transparent 60%),
+      linear-gradient(180deg, #2b3550 0%, #1b2132 100%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.22),
+      inset 0 0 0 1px rgb(169 200 255 / 0.16);
+    color: var(--color-accent);
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1;
+    opacity: 0;
+    animation:
+      fred-puff 3.2s var(--ease-out) forwards,
+      fred-wobble 1.6s ease-in-out infinite;
+  }
+
+  @keyframes fred-puff {
+    0% {
+      opacity: 0;
+      transform: translate(0, 0) scale(0.2);
+    }
+    15% {
+      opacity: 1;
+      transform: translate(calc(var(--dx) * 0.2), -0.6rem) scale(calc(var(--s) * 0.85));
+    }
+    60% {
+      opacity: 0.9;
+    }
+    100% {
+      opacity: 0;
+      transform: translate(var(--dx), -5rem) scale(calc(var(--s) * 1.15));
     }
   }
 

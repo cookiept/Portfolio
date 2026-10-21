@@ -15,11 +15,13 @@ if (root && returnBtn) {
   const bubble = root.querySelector<HTMLElement>('.fred__bubble')!;
   const bubbleText = bubble.querySelector<HTMLElement>('.fred__text')!;
   const panel = root.querySelector<HTMLElement>('.fred__panel')!;
+  const puffs = root.querySelector<HTMLElement>('.fred__puffs')!;
   const eyes = root.querySelector<SVGGElement>('.fred__eyes')!;
   const nests = [...document.querySelectorAll<HTMLElement>('[data-fred-nest]')];
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  const IDLE_MS = 45000; // adormece ao fim deste tempo sem mexer
+  const IDLE_MS = 25000; // adormece ao fim deste tempo sem lhe tocarem
+  const NEAR_PX = 180; // o rato a esta distância conta como tocar-lhe
   const TEASE_GAP_MS = 15000; // intervalo mínimo entre comentários automáticos
   const STORAGE_KEY = 'fred-hidden';
 
@@ -27,6 +29,7 @@ if (root && returnBtn) {
   let idleTimer = 0;
   let lastHover = '';
   let sleeping = false;
+  let drowsy = false; // a cabecear antes de adormecer
   let waved = false;
   let busy = false; // a fazer uma rotina
   let ready = false; // o 3D (ou o SVG) já está à vista
@@ -91,6 +94,18 @@ if (root && returnBtn) {
     const reach = Math.min(1, dist / 300) * 2.6; // até 2.6 unidades do SVG
     // o SVG está espelhado porque ele olha para a esquerda (para a página)
     eyes.style.transform = `translate(${(dx / dist) * reach * -1}px, ${(dy / dist) * reach * 0.8}px)`;
+  };
+
+  // Bolhinhas que sobem da cabeça: "z" a dormir, notas de música a dançar
+  const puff = (char: string) => {
+    if (reduced || document.hidden) return;
+    const el = document.createElement('span');
+    el.className = 'fred__puff';
+    el.textContent = char;
+    el.style.setProperty('--dx', `${(Math.random() * 1.2 - 0.3).toFixed(2)}rem`);
+    el.style.setProperty('--s', (0.75 + Math.random() * 0.4).toFixed(2));
+    puffs.append(el);
+    el.addEventListener('animationend', () => el.remove());
   };
 
   const setEyes = (ex: number, ey: number) => {
@@ -165,6 +180,22 @@ if (root && returnBtn) {
       await wait(4500);
       root.classList.remove('is-sitting', 'is-reading');
     },
+    async preen() {
+      // arranja as penas debaixo da asa
+      root.classList.add('is-preening');
+      await wait(2600);
+      root.classList.remove('is-preening');
+      flash('is-shaking', 450);
+      await wait(500);
+    },
+    async dance() {
+      root.classList.add('is-dancing');
+      for (const note of ['♪', '♫', '♪', '♫']) {
+        puff(note);
+        await wait(800);
+      }
+      root.classList.remove('is-dancing');
+    },
     async sit() {
       root.classList.add('is-sitting');
       await wait(1500);
@@ -183,6 +214,8 @@ if (root && returnBtn) {
     ['juggle', 1],
     ['read', 1],
     ['sit', 2],
+    ['preen', 1.5],
+    ['dance', 1],
   ];
 
   const pickRoutine = () => {
@@ -196,12 +229,12 @@ if (root && returnBtn) {
   };
 
   const scheduleNext = () => {
-    // uma coisa de cada vez, a cada 25 a 45 segundos
-    window.setTimeout(runRoutine, 25000 + Math.random() * 20000);
+    // uma coisa de cada vez, a cada 15 a 27 segundos
+    window.setTimeout(runRoutine, 15000 + Math.random() * 12000);
   };
 
   const runRoutine = async () => {
-    if (!reduced && !busy && !sleeping && !isHidden() && !document.hidden) {
+    if (!reduced && !busy && !sleeping && !drowsy && !isHidden() && !document.hidden) {
       busy = true;
       try {
         await routines[pickRoutine()]();
@@ -213,24 +246,47 @@ if (root && returnBtn) {
   };
 
   // ---------- adormecer / acordar ----------
-  const fallAsleep = () => {
-    if (isHidden() || busy) {
-      idleTimer = window.setTimeout(fallAsleep, IDLE_MS);
+  // Se ninguém lhe tocar (clicar ou passar o rato perto), boceja, cabeceia
+  // e adormece, com bolhinhas "z" a subir. Acorda quando lhe tocam.
+  const snore = () => {
+    if (!sleeping) return;
+    puff('z');
+    window.setTimeout(snore, 1700);
+  };
+
+  const fallAsleep = async () => {
+    if (isHidden() || busy || document.hidden || panel.classList.contains('is-visible')) {
+      idleTimer = window.setTimeout(fallAsleep, IDLE_MS / 2);
       return;
     }
+    drowsy = true;
+    root.classList.add('is-drowsy');
+    if (!reduced) flash('is-yawning', 1800);
+    await wait(5000);
+    if (!drowsy) return; // tocaram-lhe entretanto
+    drowsy = false;
+    root.classList.remove('is-drowsy');
     sleeping = true;
     root.classList.add('is-sitting', 'is-sleeping');
-    say('z z z…', 4000);
+    setEyes(0, 0);
+    window.setTimeout(snore, 900);
   };
 
   const wakeUp = () => {
     window.clearTimeout(idleTimer);
     idleTimer = window.setTimeout(fallAsleep, IDLE_MS);
+    if (drowsy) {
+      drowsy = false;
+      root.classList.remove('is-drowsy');
+      flash('is-surprised', 600);
+      return;
+    }
     if (!sleeping) return;
     sleeping = false;
     root.classList.remove('is-sitting', 'is-sleeping');
+    if (!reduced) flash('is-shaking', 600);
     flash('is-surprised', 900);
-    say('Oh! I’m awake, I promise.');
+    say(pick(['Oh! I’m awake, I promise.', 'Was I snoring?', 'Five more minutes…', 'Huh? I was just resting my eyes.']), 2600);
   };
 
   // ---------- piscar ----------
@@ -330,7 +386,9 @@ if (root && returnBtn) {
 
   // ---------- interação direta ----------
   btn.addEventListener('click', () => {
+    const wasAsleep = sleeping;
     wakeUp();
+    if (wasAsleep) return; // o primeiro toque só o acorda
     root.classList.remove('is-sitting');
     const open = !panel.classList.contains('is-visible');
     setPanel(open);
@@ -341,12 +399,14 @@ if (root && returnBtn) {
   window.addEventListener(
     'pointermove',
     (e) => {
-      wakeUp();
+      const r = btn.getBoundingClientRect();
+      const dist = Math.hypot(e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2));
+      // só acorda se o rato chegar perto dele
+      if (dist < NEAR_PX) wakeUp();
+      if (sleeping || drowsy) return;
       lookAt(e.clientX, e.clientY);
 
       if (reduced || busy || isHidden() || e.pointerType !== 'mouse') return;
-      const r = btn.getBoundingClientRect();
-      const dist = Math.hypot(e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2));
       const now = Date.now();
       if (dist < r.width * 0.9 && dist > r.width * 0.55 && now - lastDodge > 45000) {
         lastDodge = now;
@@ -408,7 +468,6 @@ if (root && returnBtn) {
   window.addEventListener(
     'scroll',
     () => {
-      wakeUp();
       queueDuck();
       const y = window.scrollY;
       if (Math.abs(y - panelY) > 120) setPanel(false); // fecha ao fazer scroll
@@ -420,7 +479,7 @@ if (root && returnBtn) {
 
       if (speed > 5) tease(pick(['Woah, slow down!', 'Wheee!', 'Not so fast, there’s good stuff here.']));
 
-      if (busy) return;
+      if (busy || sleeping || drowsy) return;
       // enquanto se faz scroll, olha na direção do movimento
       setEyes(0, down ? 3 : -3);
       if (!reduced) root.classList.add('is-bouncing');

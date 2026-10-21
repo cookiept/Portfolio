@@ -296,7 +296,7 @@ export function mountFred3D(root: HTMLElement) {
   const has = (cls: string) => root.classList.contains(cls);
   const ease = (cur: number, target: number, dt: number, k = 10) => cur + (target - cur) * (1 - Math.exp(-dt * k));
   const s = {
-    yaw: 0, pitch: 0, sit: 0, jaw: 0, eyeY: 1, eyeS: 1, book: 0,
+    yaw: 0, pitch: 0, tilt: 0, sit: 0, jaw: 0, eyeY: 1, eyeS: 1, book: 0,
     wl: 0.3, wle: 0, wlx: 0, wr: 0.3, wre: 0, wrx: 0,
   };
   let hopT = -1;
@@ -332,6 +332,10 @@ export function mountFred3D(root: HTMLElement) {
     const stretching = has('is-stretching');
     const yawning = has('is-yawning');
     const excited = has('is-excited') || has('is-surprised');
+    const drowsy = has('is-drowsy');
+    const preening = has('is-preening');
+    const dancing = has('is-dancing');
+    const shaking = has('is-shaking');
 
     // Para onde está virado: de lado a andar, de costas a esconder-se,
     // ou a três quartos a olhar para o rato
@@ -339,11 +343,19 @@ export function mountFred3D(root: HTMLElement) {
     let yawT: number;
     if (walking) yawT = left ? -Math.PI / 2 : Math.PI / 2;
     else if (back) yawT = Math.PI;
+    else if (preening) yawT = -0.85; // vira-se para a asa esquerda
     else yawT = (left ? -0.3 : 0.3) * 0.6 + lx * 0.45;
+    // a cabecear com sono, ou de cabeça em baixo a dormir
+    const nod = drowsy ? Math.max(0, Math.sin(time * 1.4)) ** 6 * 0.3 : 0;
+    let pitchT = walking || back ? 0 : ly * 0.12;
+    if (sleeping) pitchT = 0.14;
+    if (preening) pitchT = 0.3;
     s.yaw = ease(s.yaw, yawT, dt, 8);
-    s.pitch = ease(s.pitch, walking || back ? 0 : ly * 0.12, dt, 8);
+    s.pitch = ease(s.pitch, pitchT, dt, sleeping ? 2 : 8);
+    s.tilt = ease(s.tilt, sleeping ? 0.13 : preening ? -0.12 : 0, dt, 2.5);
     model.rotation.y = s.yaw;
-    torso.rotation.x = s.pitch - s.sit * 0.08;
+    torso.rotation.x = s.pitch + nod - s.sit * 0.08;
+    torso.rotation.z = s.tilt;
 
     // Saltos (ao clicar, ao ver um projeto)
     const hopping = jumping || has('is-hopping');
@@ -367,6 +379,12 @@ export function mountFred3D(root: HTMLElement) {
       roll = Math.sin(walkPhase) * 0.07;
       hy += Math.abs(Math.sin(walkPhase)) * 0.05;
     }
+    if (dancing) {
+      roll = Math.sin(time * 6) * 0.12;
+      hy += Math.abs(Math.sin(time * 6)) * 0.06;
+    }
+    // sacode as penas ao acordar
+    if (shaking) roll += Math.sin(time * 42) * 0.1;
     if (has('is-bouncing')) squash *= 0.95;
     if (stretching) squash *= 1.06;
     hopper.position.y = hy;
@@ -375,7 +393,7 @@ export function mountFred3D(root: HTMLElement) {
 
     // Sentado e a respirar
     s.sit = ease(s.sit, sitting ? 1 : 0, dt, 8);
-    const breathe = sleeping || reading ? 1 + Math.sin(time * 2) * 0.015 : 1;
+    const breathe = sleeping ? 1 + Math.sin(time * 1.5) * 0.03 : reading || drowsy ? 1 + Math.sin(time * 2) * 0.015 : 1;
     torso.position.y = -0.2 * s.sit;
     torso.scale.set(1, breathe, 1);
 
@@ -385,6 +403,17 @@ export function mountFred3D(root: HTMLElement) {
       wl = wr = 0.3 + Math.sin(walkPhase) * 0.12;
     }
     if (sitting) wl = wr = 0.15;
+    if (sleeping) wl = wr = 0.06;
+    if (dancing) {
+      wl = 0.6 + Math.sin(time * 6) * 0.35;
+      wr = 0.6 - Math.sin(time * 6) * 0.35;
+    }
+    if (preening) {
+      // levanta a asa e arranja as penas
+      wl = 1.1 + Math.sin(time * 18) * 0.08;
+      wle = 0.5;
+      wlx = -0.35;
+    }
     if (reading) {
       wl = wr = 0.45;
       wle = wre = 0.45;
@@ -430,7 +459,7 @@ export function mountFred3D(root: HTMLElement) {
 
     // Olhos: piscar, fechados a dormir, maiores quando está contente
     const closed = has('is-blinking') || sleeping;
-    s.eyeY = ease(s.eyeY, closed ? 0.1 : yawning ? 0.35 : 1, dt, closed ? 30 : 14);
+    s.eyeY = ease(s.eyeY, closed ? 0.1 : yawning ? 0.35 : drowsy ? 0.4 : preening ? 0.5 : 1, dt, closed ? 30 : 14);
     s.eyeS = ease(s.eyeS, excited ? 1.15 : 1, dt, 12);
     eyeL.scale.set(s.eyeS, s.eyeS * s.eyeY, s.eyeS);
     eyeR.scale.copy(eyeL.scale);
@@ -711,42 +740,6 @@ function addAccessory(kind: string, torso: THREE.Group): Accessory | null {
   const g = new THREE.Group();
   torso.add(g);
   const still = (hidesCrest = false): Accessory => ({ hidesCrest, update() {} });
-
-  if (kind === 'stars') {
-    // Find Your Constellation: três estrelas a orbitar a cabeça
-    const shape = new THREE.Shape();
-    for (let i = 0; i < 10; i++) {
-      const r = i % 2 ? 0.07 : 0.16;
-      const a = (i / 10) * Math.PI * 2 + Math.PI / 2;
-      if (i) shape.lineTo(Math.cos(a) * r, Math.sin(a) * r);
-      else shape.moveTo(Math.cos(a) * r, Math.sin(a) * r);
-    }
-    const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.05, bevelEnabled: true, bevelSize: 0.02, bevelThickness: 0.02, bevelSegments: 2 });
-    geo.center();
-    const gold = mat(0xf4d27a, { metalness: 0.6, roughness: 0.3, emissive: 0x5a4300 });
-    const ring = new THREE.Group();
-    ring.position.y = 2.2;
-    ring.rotation.x = 0.35;
-    g.add(ring);
-    const stars = [0, 1, 2].map((i) => {
-      const star = new THREE.Mesh(geo, gold);
-      const a = (i / 3) * Math.PI * 2;
-      star.position.set(Math.cos(a) * 0.62, 0, Math.sin(a) * 0.62);
-      star.scale.setScalar(i === 0 ? 1.1 : 0.8);
-      ring.add(star);
-      return star;
-    });
-    return {
-      hidesCrest: false,
-      update(time) {
-        ring.rotation.y = time * 0.6;
-        stars.forEach((star, i) => {
-          star.rotation.y = -ring.rotation.y; // ficam sempre de frente
-          star.position.y = Math.sin(time * 2 + i * 2) * 0.05;
-        });
-      },
-    };
-  }
 
   if (kind === 'pin') {
     // Pinnie: um pionés vermelho espetado na cabeça
