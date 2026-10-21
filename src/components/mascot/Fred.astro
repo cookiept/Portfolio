@@ -1,5 +1,6 @@
 ---
-// Fred: a mascote do site, um passarinho azul. Vive no fundo do ecrã:
+// Fred: a mascote do site, um passarinho azul em 3D (src/scripts/fred3d.ts),
+// com uma versão em SVG enquanto o 3D carrega ou se não houver WebGL. Vive no fundo do ecrã:
 // passeia de um lado para o outro (de perfil), entretém-se sozinho, segue
 // o rato com os olhos, reage aos projetos e ao contacto e mete-se com o
 // visitante de vez em quando. A lógica está em src/scripts/fred.ts.
@@ -205,6 +206,26 @@
 
   .fred.is-facing-left .fred__svg {
     transform: scaleX(-1);
+  }
+
+  /* Versão 3D: o canvas é maior do que o botão para caberem as asas
+     abertas e os saltos. O SVG fica escondido mas continua lá, porque o
+     script lê dele para onde o Fred está a olhar. */
+  .fred__btn {
+    position: relative;
+  }
+
+  .fred.is-3d .fred__svg {
+    visibility: hidden;
+  }
+
+  .fred__btn :global(.fred__canvas) {
+    position: absolute;
+    left: -40%;
+    bottom: -12%;
+    width: 180%;
+    height: 180%;
+    pointer-events: none;
   }
 
   /* ---------- Cores ---------- */
@@ -680,4 +701,13 @@
 
 <script>
   import '../../scripts/fred';
+
+  // O Fred em 3D carrega depois do resto da página, para não a atrasar.
+  // Até lá (ou sem WebGL) vê-se o Fred em SVG.
+  const root = document.querySelector<HTMLElement>('[data-fred-root]');
+  if (root) {
+    const load = () => import('../../scripts/fred3d').then((m) => m.mountFred3D(root));
+    if ('requestIdleCallback' in window) requestIdleCallback(load, { timeout: 2500 });
+    else window.setTimeout(load, 1200);
+  }
 </script>
