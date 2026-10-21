@@ -24,7 +24,9 @@ const projects = defineCollection({
       // Sistema visual: cores e tipos de letra
       z.object({
         type: z.literal('system'),
+        eyebrow: z.string().optional(),
         title: z.string(),
+        lede: z.string().optional(),
         colors: z.array(z.object({ name: z.string(), hex: z.string() })),
         fonts: z.array(z.object({ name: z.string(), role: z.string(), family: z.string(), weight: z.number().default(400), italic: z.boolean().default(false), sample: z.string() })),
       }),

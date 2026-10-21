@@ -5,21 +5,23 @@ kind: web
 order: 1
 cover: ../../assets/projects/find-your-constellation.jpg
 facts:
-  - label: Type
-    value: Web app concept
-  - label: Platform
-    value: Desktop
+  - label: My role
+    value: Research and UI design
+  - label: Team
+    value: 3 designers
+  - label: Year
+    value: '2025'
+  - label: Duration
+    value: 3 weeks
   - label: Tools
     value: Figma
-  - label: Flow
-    value: 6 steps, 4 result clusters
 blocks:
   - type: text
     eyebrow: The problem
-    title: Same work, dozens of names
+    title: Many skills, no clear direction
     body:
-      - Design has more job titles than anyone can keep track of. A Layout Designer, a Publication Designer and a Book Designer often do the same job.
-      - Students and junior designers struggle to see where their skills fit, what each path pays and what to learn next.
+      - Many designers feel lost. They collect skills and keep learning, but they are not sure where to focus.
+      - Our goal was to help with that decision, and to go further than a single answer. Knowing your area is only the start, so the result also points to what comes next.
   - type: text
     eyebrow: The idea
     title: Your skills, drawn as stars
@@ -88,8 +90,16 @@ blocks:
       - src: ../../assets/projects/constellation/result-uxui.jpg
         alt: UX/UI Designer cluster result page
         label: UX/UI Designer
+  - type: text
+    eyebrow: Beyond the result
+    title: More than a label
+    body:
+      - A result alone does not help much, so every cluster opens doors. You find people in the field you can connect with, courses to grow, and areas outside your main cluster where your skills could also fit.
+      - The journey ends with a choice to share your constellation or start again, because skills change and so can the answer.
   - type: system
+    eyebrow: Look and feel
     title: Visual system
+    lede: A quiet night sky, where light is kept for what matters. Thin titles, italic serif names and soft glass chips, with one red for the main action.
     colors:
       - name: Night
         hex: '#0f0f0f'
