@@ -81,7 +81,7 @@ export function mountFred3D(root: HTMLElement) {
   // Corpo: uma só peça torneada (cabeça redonda e corpo em pera)
   const profile = new THREE.CatmullRomCurve3(
     [
-      [0, 0], [0.5, 0.02], [0.77, 0.14], [0.9, 0.36], [0.93, 0.6], [0.89, 0.84],
+      [0, 0], [0.5, 0.02], [0.76, 0.14], [0.87, 0.36], [0.89, 0.6], [0.86, 0.84],
       [0.82, 1.02], [0.83, 1.2], [0.81, 1.42], [0.72, 1.66], [0.52, 1.86], [0.27, 1.97], [0, 2],
     ].map(([x, y]) => new THREE.Vector3(x, y, 0)),
   );
@@ -89,15 +89,15 @@ export function mountFred3D(root: HTMLElement) {
   pts[0].x = 0;
   pts[pts.length - 1].x = 0;
   const bodyGeo = new THREE.LatheGeometry(pts, 96);
-  bodyGeo.scale(1, 1.06, 0.9);
+  bodyGeo.scale(0.92, 1.06, 0.82);
   // Barriga mais clara pintada no próprio corpo, sem costuras
   const pos = bodyGeo.attributes.position;
   const colors = new Float32Array(pos.count * 3);
   const c = new THREE.Color();
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
-    const d = (x / 0.54) ** 2 + ((y - 0.6) / 0.44) ** 2;
-    const w = (1 - smooth(0.72, 1.0, d)) * smooth(0.15, 0.45, z);
+    const d = (x / 0.5) ** 2 + ((y - 0.6) / 0.44) ** 2;
+    const w = (1 - smooth(0.72, 1.0, d)) * smooth(0.12, 0.38, z);
     c.copy(BODY).lerp(BELLY, w);
     colors.set([c.r, c.g, c.b], i * 3);
   }
@@ -127,7 +127,7 @@ export function mountFred3D(root: HTMLElement) {
     [eyeR, 0.3],
   ].forEach(([g, ex]) => {
     const grp = g as THREE.Group;
-    grp.position.set(ex as number, 1.48, 0.665);
+    grp.position.set((ex as number) * 0.92, 1.48, 0.615);
     grp.rotation.y = (ex as number) * 0.8;
     const ball = ellipsoid(0.08, 0.092, 0.045, eyeMat, 20);
     grp.add(ball);
@@ -139,42 +139,74 @@ export function mountFred3D(root: HTMLElement) {
 
   // Bico: parte de cima fixa e de baixo a abrir
   const beakUp = ellipsoid(0.15, 0.08, 0.17, orangeMat);
-  beakUp.position.set(0, 1.33, 0.76);
+  beakUp.position.set(0, 1.33, 0.7);
   beakUp.rotation.x = 0.2;
   torso.add(beakUp);
   const mouth = ellipsoid(0.1, 0.06, 0.08, mouthMat, 16);
-  mouth.position.set(0, 1.26, 0.74);
+  mouth.position.set(0, 1.26, 0.67);
   mouth.scale.multiplyScalar(0.01);
   torso.add(mouth);
   const jaw = new THREE.Group();
-  jaw.position.set(0, 1.28, 0.7);
+  jaw.position.set(0, 1.28, 0.63);
   torso.add(jaw);
   const beakDown = ellipsoid(0.11, 0.05, 0.12, orangeMat);
   beakDown.position.set(0, -0.005, 0.07);
   jaw.add(beakDown);
 
-  // Asas em dois segmentos (ombro e "cotovelo") para poder pôr as mãos na cintura
+  // Asas: uma só peça em forma de gota (larga no ombro, ponta redonda),
+  // achatada de lado como nas imagens. Para pôr as mãos na cintura ou
+  // segurar o livro, a ponta dobra suavemente para dentro.
+  const wingShape = (() => {
+    const prof = new THREE.CatmullRomCurve3(
+      [
+        [0, 0.06], [0.1, 0.035], [0.15, -0.05], [0.16, -0.17], [0.14, -0.3], [0.1, -0.42], [0.05, -0.5], [0, -0.52],
+      ].map(([x, y]) => new THREE.Vector3(x, y, 0)),
+    );
+    const p = prof.getPoints(28).map((v) => new THREE.Vector2(Math.max(0.0001, v.x), v.y));
+    p[0].x = 0;
+    p[p.length - 1].x = 0;
+    const g = new THREE.LatheGeometry(p, 28);
+    g.scale(0.8, 1, 0.7);
+    const base = Float32Array.from(g.attributes.position.array as Float32Array);
+    const bent = new Float32Array(base.length);
+    const PIVOT = -0.18;
+    for (let i = 0; i < base.length; i += 3) {
+      const x = base[i], y = base[i + 1];
+      const a = 2.0 * smooth(0, 0.22, PIVOT - y); // dobra só abaixo do "cotovelo"
+      const dy = y - PIVOT;
+      bent[i] = x * Math.cos(a) - dy * Math.sin(a);
+      bent[i + 1] = PIVOT + x * Math.sin(a) + dy * Math.cos(a);
+      bent[i + 2] = base[i + 2];
+    }
+    return { g, base, bent };
+  })();
   const makeWing = (side: number) => {
     const shoulder = new THREE.Group();
-    shoulder.position.set(side * 0.8, 1.06, 0.04);
-    const upper = ellipsoid(0.11, 0.19, 0.12, wingMat);
-    upper.position.y = -0.15;
-    shoulder.add(upper);
-    const elbow = new THREE.Group();
-    elbow.position.y = -0.24;
-    shoulder.add(elbow);
-    const lower = ellipsoid(0.1, 0.2, 0.11, wingMat);
-    lower.position.y = -0.12;
-    elbow.add(lower);
+    shoulder.position.set(side * 0.78, 1.06, 0.04);
+    const geo = wingShape.g.clone();
+    const mesh = new THREE.Mesh(geo, wingMat);
+    mesh.scale.x = side < 0 ? 1 : -1; // a direita é a esquerda espelhada
+    shoulder.add(mesh);
     torso.add(shoulder);
-    return { shoulder, elbow, side };
+    let current = 0;
+    // 0 = asa direita, 1 = ponta dobrada para dentro (mãos na cintura)
+    const bend = (k: number) => {
+      if (Math.abs(k - current) < 0.002) return;
+      current = k;
+      const arr = geo.attributes.position.array as Float32Array;
+      const { base, bent } = wingShape;
+      for (let i = 0; i < arr.length; i++) arr[i] = base[i] + (bent[i] - base[i]) * k;
+      geo.attributes.position.needsUpdate = true;
+      geo.computeVertexNormals();
+    };
+    return { shoulder, bend, side };
   };
   const wingL = makeWing(-1);
   const wingR = makeWing(1);
 
   // Cauda (vê-se de lado e de costas)
   const tail = new THREE.Group();
-  tail.position.set(0, 0.53, -0.74);
+  tail.position.set(0, 0.53, -0.66);
   tail.rotation.x = -0.7;
   [-0.35, 0, 0.35].forEach((rz) => {
     const f = ellipsoid(0.08, 0.04, 0.2, wingMat, 16);
@@ -188,7 +220,7 @@ export function mountFred3D(root: HTMLElement) {
 
   // Livro (para a rotina de ler)
   const book = new THREE.Group();
-  book.position.set(0, 0.82, 0.98);
+  book.position.set(0, 0.82, 0.9);
   book.rotation.x = -0.35;
   [-1, 1].forEach((s) => {
     const page = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.38, 0.025), paperMat);
@@ -259,7 +291,7 @@ export function mountFred3D(root: HTMLElement) {
   const ease = (cur: number, target: number, dt: number, k = 10) => cur + (target - cur) * (1 - Math.exp(-dt * k));
   const s = {
     yaw: 0, pitch: 0, sit: 0, jaw: 0, eyeY: 1, eyeS: 1, book: 0,
-    wl: 0.22, wle: 0, wlx: 0, wr: 0.22, wre: 0, wrx: 0,
+    wl: 0.3, wle: 0, wlx: 0, wr: 0.3, wre: 0, wrx: 0,
   };
   let hopT = -1;
   let wasHopping = false;
@@ -341,28 +373,28 @@ export function mountFred3D(root: HTMLElement) {
     torso.scale.set(1, breathe, 1);
 
     // Asas: ângulo para fora (w), cotovelo (e) e para a frente (x)
-    let wl = 0.22, wle = 0, wlx = 0, wr = 0.22, wre = 0, wrx = 0;
+    let wl = 0.3, wle = 0, wlx = 0, wr = 0.3, wre = 0, wrx = 0;
     if (walking) {
       wl = wr = 0.3 + Math.sin(walkPhase) * 0.12;
     }
     if (sitting) wl = wr = 0.15;
     if (reading) {
       wl = wr = 0.45;
-      wle = wre = -0.9;
+      wle = wre = 0.45;
       wlx = wrx = -0.9;
     }
     if (sassy) {
-      wl = wr = 1.2;
-      wle = wre = -2.1;
-      wlx = wrx = -0.35;
+      wl = wr = 1.25;
+      wle = wre = 1;
+      wlx = wrx = -0.25;
     }
     if (jumping || stretching) {
       wl = wr = stretching ? 2.6 : 2.1;
-      wle = wre = 0.2;
+      wle = wre = 0;
     }
     if (waving) {
       wr = 2.5 + Math.sin(time * 12) * 0.3;
-      wre = -0.3 + Math.sin(time * 12 + 0.6) * 0.35;
+      wre = 0.1 + Math.sin(time * 12 + 0.6) * 0.1;
     }
     s.wl = ease(s.wl, wl, dt, 12);
     s.wle = ease(s.wle, wle, dt, 12);
@@ -372,15 +404,15 @@ export function mountFred3D(root: HTMLElement) {
     s.wrx = ease(s.wrx, wrx, dt, 12);
     // lado esquerdo roda para -z, direito para +z
     wingL.shoulder.rotation.set(s.wlx, 0, -s.wl);
-    wingL.elbow.rotation.z = -s.wle;
+    wingL.bend(s.wle);
     wingR.shoulder.rotation.set(s.wrx, 0, s.wr);
-    wingR.elbow.rotation.z = s.wre;
+    wingR.bend(s.wre);
 
     // Patas
     feet.forEach(({ g, side }, i) => {
       const step = walking ? Math.sin(walkPhase + i * Math.PI) : 0;
-      const standX = side * 0.3, standZ = 0.42;
-      const sitX = side * 0.44, sitZ = 0.62;
+      const standX = side * 0.28, standZ = 0.38;
+      const sitX = side * 0.4, sitZ = 0.58;
       g.position.set(
         standX + (sitX - standX) * s.sit,
         0.06 + Math.max(0, step) * 0.12 + 0.1 * s.sit,
