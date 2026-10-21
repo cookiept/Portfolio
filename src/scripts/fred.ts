@@ -6,7 +6,6 @@
 // No ninho há um ovo por projeto: abrir um projeto choca o ovo dele (fica
 // guardado no browser) e ver todos dá um ovo dourado. Nos case studies,
 // quando um ecrã com nota ([data-fred-note]) aparece, conta a curiosidade.
-import type { EggState, Nest } from './fred3d';
 
 const root = document.querySelector<HTMLElement>('[data-fred-root]');
 const returnBtn = document.querySelector<HTMLButtonElement>('.fred-return');
@@ -22,20 +21,6 @@ if (root && returnBtn) {
   const IDLE_MS = 45000; // adormece ao fim deste tempo sem mexer
   const TEASE_GAP_MS = 15000; // intervalo mínimo entre comentários automáticos
   const STORAGE_KEY = 'fred-hidden';
-  const EGGS_KEY = 'fred-hatched';
-
-  // Ovos: um por projeto, pela ordem da página inicial
-  const projects = (root.dataset.projects ?? '').split(',').filter(Boolean);
-  const slugOf = (href: string) => /\/projects\/([^/?#]+)/.exec(href)?.[1] ?? '';
-  const current = slugOf(window.location.pathname);
-  const isCase = projects.includes(current);
-  const hatched = new Set<string>();
-  try {
-    JSON.parse(localStorage.getItem(EGGS_KEY) ?? '[]').forEach((id: string) => projects.includes(id) && hatched.add(id));
-  } catch {
-    /* sem armazenamento: começa sempre do zero */
-  }
-  let nest: Nest | null = null;
 
   let bubbleTimer = 0;
   let idleTimer = 0;
@@ -237,46 +222,7 @@ if (root && returnBtn) {
     window.setTimeout(blinkLoop, 2500 + Math.random() * 3500);
   };
 
-  // ---------- ovos ----------
-  const eggStates = (): EggState[] => projects.map((id) => (hatched.has(id) ? 'hatched' : 'egg'));
-  const allHatched = () => projects.length > 0 && hatched.size >= projects.length;
-  const drawEggs = () => nest?.setEggs(eggStates(), allHatched());
-  const saveEggs = () => {
-    try {
-      localStorage.setItem(EGGS_KEY, JSON.stringify([...hatched]));
-    } catch {
-      /* ignora */
-    }
-  };
-
-  // Ao abrir um projeto pela primeira vez, o ovo dele choca
-  const hatchCurrent = async () => {
-    if (!isCase || hatched.has(current)) return false;
-    await wait(1600);
-    hatched.add(current);
-    saveEggs();
-    drawEggs();
-    if (!reduced) flash('is-jumping', 700);
-    say(`Crack! An egg hatched. ${hatched.size} of ${projects.length} projects seen.`, 3800);
-    lastTease = Date.now();
-    if (allHatched()) {
-      await wait(4200);
-      if (!reduced) flash('is-waving', 2400);
-      say('You’ve seen every project! Here’s a golden egg. Maybe say hi to Gonçalo?', 5000);
-      lastTease = Date.now();
-    }
-    return true;
-  };
-
-  const clickLines = () => {
-    if (allHatched()) return ['You’ve seen them all. You’re my favourite visitor!', 'Shiny, isn’t it? That golden egg is yours.'];
-    const left = projects.length - hatched.size;
-    return [
-      `${hatched.size} of ${projects.length} eggs hatched. Open a project to hatch another!`,
-      `${left} egg${left === 1 ? '' : 's'} left in my nest.`,
-      'Hehe, that tickles.',
-    ];
-  };
+  const clickLines = ['Hehe, that tickles.', 'Hi! I’m Fred.', 'Careful, my nest is fragile!'];
   let clicks = 0;
 
   // ---------- notas do Fred nos case studies ----------
@@ -349,8 +295,7 @@ if (root && returnBtn) {
     wakeUp();
     root.classList.remove('is-sitting');
     if (!reduced) flash('is-jumping', 700);
-    const lines = clickLines();
-    say(lines[clicks % lines.length], 3200);
+    say(clickLines[clicks % clickLines.length], 3200);
     clicks++;
   });
 
@@ -411,9 +356,7 @@ if (root && returnBtn) {
       tease('That one is still cooking…', 2200, '');
       return;
     }
-    const slug = slugOf(card.querySelector('a')?.getAttribute('href') ?? '');
-    if (slug && !hatched.has(slug)) tease(pick(['Open it to hatch an egg!', `${name} has an egg waiting.`]), 2400, 'is-jumping');
-    else if (Math.random() < 0.5) tease(pick([`Ooh, ${name}!`, `${name} is one of my favourites.`]), 2200, 'is-jumping');
+    if (Math.random() < 0.5) tease(pick([`Ooh, ${name}!`, `${name} is one of my favourites.`]), 2200, 'is-jumping');
     // se ficar muito tempo em cima de um projeto, dá um empurrãozinho
     dwellTimer = window.setTimeout(() => {
       if (lastHover === name) tease('Go on, open it. I won’t tell anyone.');
@@ -490,27 +433,16 @@ if (root && returnBtn) {
   // ---------- arranque: só depois de o Fred estar à vista ----------
   root.addEventListener(
     'fred:ready',
-    async (e) => {
+    () => {
       ready = true;
-      nest = (e as CustomEvent<{ nest: Nest | null }>).detail?.nest ?? null;
       placeHome();
       checkDuck();
-      drawEggs();
       idleTimer = window.setTimeout(fallAsleep, IDLE_MS);
       blinkLoop();
       window.setTimeout(runRoutine, 12000);
       if (isHidden()) return;
-      if (await hatchCurrent()) return;
       if (!reduced) flash('is-waving', 2000);
-      const left = projects.length - hatched.size;
-      say(
-        hatched.size === 0
-          ? 'Hi! I’m Fred. Open a project to hatch one of my eggs.'
-          : left > 0
-            ? `Welcome back! ${left} egg${left === 1 ? '' : 's'} still to hatch.`
-            : 'Hi again, golden egg finder!',
-        3800,
-      );
+      say('Hi! I’m Fred.', 3000);
       lastTease = Date.now();
     },
     { once: true },
