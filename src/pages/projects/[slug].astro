@@ -23,7 +23,8 @@ export async function getStaticPaths() {
 }
 
 const { project, next } = Astro.props;
-const { title, summary, cover, facts, blocks } = project.data;
+// O poster fica só no cartão da página inicial, não se repete aqui
+const { title, summary, facts, blocks } = project.data;
 const { Content } = await render(project);
 const shotWidths = [600, 1000, 1512];
 ---
@@ -48,14 +49,6 @@ const shotWidths = [600, 1000, 1512];
         )
       }
     </header>
-
-    {
-      cover && (
-        <div class="container">
-          <Image class="case__cover" src={cover} alt={`${title} poster`} widths={[800, 1400, 2400]} quality={90} sizes="(max-width: 80rem) 100vw, 80rem" loading="eager" />
-        </div>
-      )
-    }
 
     {
       blocks ? (
@@ -222,12 +215,6 @@ const shotWidths = [600, 1000, 1512];
 
   .case__facts dd {
     margin: var(--space-1) 0 0;
-  }
-
-  .case__cover {
-    width: 100%;
-    height: auto;
-    border-radius: var(--radius-card);
   }
 
   .case__blocks {

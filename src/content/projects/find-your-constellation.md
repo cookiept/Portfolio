@@ -88,11 +88,6 @@ blocks:
       - src: ../../assets/projects/constellation/result-uxui.jpg
         alt: UX/UI Designer cluster result page
         label: UX/UI Designer
-  - type: figure
-    image:
-      src: ../../assets/projects/constellation/roles.jpg
-      alt: A constellation with the line Different names, same cluster, and eight editorial job titles as chips
-    caption: Different names, same cluster. The answer to the problem in one screen.
   - type: system
     title: Visual system
     colors:
