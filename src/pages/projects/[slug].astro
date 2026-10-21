@@ -58,7 +58,7 @@ const shotWidths = [600, 1000, 1512];
           {blocks.map((b) => {
             if (b.type === 'text')
               return (
-                <section class="b-text" data-reveal>
+                <section class="b-text" data-reveal data-fred-section={b.eyebrow ?? b.title}>
                   <div>
                     {b.eyebrow && <p class="eyebrow">{b.eyebrow}</p>}
                     <h2>{b.title}</h2>
@@ -107,7 +107,7 @@ const shotWidths = [600, 1000, 1512];
               );
             if (b.type === 'steps')
               return (
-                <section class="b-steps" data-reveal>
+                <section class="b-steps" data-reveal data-fred-section={b.title}>
                   <h2>{b.title}</h2>
                   <ol>
                     {b.steps.map((s) => (
@@ -121,7 +121,7 @@ const shotWidths = [600, 1000, 1512];
               );
             if (b.type === 'system')
               return (
-                <section class="b-system" data-reveal>
+                <section class="b-system" data-reveal data-fred-section={b.title}>
                   <div class="b-system__head">
                     {b.eyebrow && <p class="eyebrow">{b.eyebrow}</p>}
                     <h2>{b.title}</h2>

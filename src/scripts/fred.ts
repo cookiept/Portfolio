@@ -1,8 +1,11 @@
 // Comportamento do Fred, a mascote do site.
-// Vive no fundo do ecrã: de vez em quando passeia, espreita da borda ou
-// entretém-se com uma pequena rotina. Segue o rato com os olhos, reage aos
-// projetos e ao contacto, mete-se com o visitante (sem exagerar) e
-// adormece se ninguém mexer durante um bocado.
+// Vive num ninho no canto inferior direito, sempre no mesmo sítio em todas
+// as páginas. Não passeia pela página (para não tapar os projetos): fica no
+// ninho, entretém-se com pequenas rotinas, segue o rato com os olhos e
+// encolhe-se quando um projeto passa por trás dele.
+// Ao clicar é útil: na página inicial abre atalhos; nas páginas de projeto
+// abre o guia das secções, com quanto falta ler e o projeto seguinte.
+import { withBase } from '../utils/url';
 
 const root = document.querySelector<HTMLElement>('[data-fred-root]');
 const returnBtn = document.querySelector<HTMLButtonElement>('.fred-return');
@@ -12,35 +15,33 @@ if (root && returnBtn) {
   const hideBtn = root.querySelector<HTMLButtonElement>('.fred__hide')!;
   const bubble = root.querySelector<HTMLElement>('.fred__bubble')!;
   const eyes = root.querySelector<SVGGElement>('.fred__eyes')!;
+  const menu = root.querySelector<HTMLElement>('.fred__menu')!;
+  const menuTitle = menu.querySelector<HTMLElement>('.fred__menu-title')!;
+  const menuList = menu.querySelector<HTMLElement>('.fred__menu-list')!;
+  const menuProgress = menu.querySelector<HTMLElement>('.fred__menu-progress')!;
+  const nests = [...document.querySelectorAll<HTMLElement>('[data-fred-nest]')];
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const IDLE_MS = 45000; // adormece ao fim deste tempo sem mexer
   const TEASE_GAP_MS = 15000; // intervalo mínimo entre comentários automáticos
-  const WALK_SPEED = 110; // px por segundo
-  const MARGIN = 24;
   const STORAGE_KEY = 'fred-hidden';
 
-  const clickLines = [
-    'Hi! I’m Fred.',
-    'I keep an eye on Gonçalo’s projects.',
-    'Gonçalo keeps me around for company.',
-    'Hehe, that tickles.',
-    'Okay, okay, I’m awake!',
-    'You really like clicking, huh?',
-  ];
+  // Secções do case study (só existem nas páginas de projeto)
+  const sections = [...document.querySelectorAll<HTMLElement>('[data-fred-section]')];
+  const nextLink = document.querySelector<HTMLAnchorElement>('.case__next a');
+  const isCase = sections.length > 0;
 
-  let clicks = 0;
   let bubbleTimer = 0;
   let idleTimer = 0;
   let lastHover = '';
   let sleeping = false;
   let waved = false;
-  let busy = false; // a passear ou a fazer uma rotina
-  let x = 0;
-  let facing = -1; // começa no canto direito, virado para a página
+  let busy = false; // a fazer uma rotina
+  let ready = false; // o 3D (ou o SVG) já está à vista
   let lastTease = 0;
   let saidLeaving = false;
   let lastDodge = 0;
+  let menuOpen = false;
 
   const isHidden = () => root.classList.contains('is-hidden');
   const wait = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
@@ -56,6 +57,7 @@ if (root && returnBtn) {
   };
 
   const say = (text: string, ms = 2800) => {
+    if (menuOpen) return; // o menu já está a ocupar o espaço do balão
     bubble.textContent = text;
     bubble.classList.add('is-visible');
     window.clearTimeout(bubbleTimer);
@@ -66,7 +68,7 @@ if (root && returnBtn) {
   // Por defeito põe as mãos na cintura enquanto fala.
   const tease = (text: string, ms = 2600, pose = 'is-sassy') => {
     const now = Date.now();
-    if (isHidden() || sleeping || now - lastTease < TEASE_GAP_MS) return false;
+    if (!ready || isHidden() || sleeping || menuOpen || now - lastTease < TEASE_GAP_MS) return false;
     if (bubble.classList.contains('is-visible')) return false;
     lastTease = now;
     say(text, ms);
@@ -81,78 +83,63 @@ if (root && returnBtn) {
     const dy = py - (r.top + r.height * 0.48);
     const dist = Math.hypot(dx, dy) || 1;
     const reach = Math.min(1, dist / 300) * 2.6; // até 2.6 unidades do SVG
-    // o SVG pode estar espelhado quando ele está virado para a esquerda
-    const ex = (dx / dist) * reach * (facing < 0 ? -1 : 1);
-    eyes.style.transform = `translate(${ex}px, ${(dy / dist) * reach * 0.8}px)`;
+    // o SVG está espelhado porque ele olha para a esquerda (para a página)
+    eyes.style.transform = `translate(${(dx / dist) * reach * -1}px, ${(dy / dist) * reach * 0.8}px)`;
   };
 
   const setEyes = (ex: number, ey: number) => {
     eyes.style.transform = `translate(${ex}px, ${ey}px)`;
   };
 
-  // ---------- posição e passeio ----------
-  const size = () => root.offsetWidth;
-  const minX = () => MARGIN;
-  const maxX = () => window.innerWidth - size() - MARGIN;
-  const clampX = (v: number) => Math.max(minX(), Math.min(maxX(), v));
+  // ---------- casa: o ninho ----------
+  // A posição vem sempre do ninho, por isso é igual em todas as páginas.
+  const placeHome = () => {
+    const nest = nests[0]?.getBoundingClientRect();
+    const size = root.offsetWidth;
+    const x = nest && nest.width ? nest.left + nest.width / 2 - size / 2 : window.innerWidth - size - 32;
+    root.style.setProperty('--walk-dur', '0ms');
+    root.style.setProperty('--x', `${x}px`);
+  };
+  root.classList.add('is-facing-left');
+  placeHome();
+  window.addEventListener('resize', placeHome);
 
-  const setFacing = (dir: number) => {
-    facing = dir;
-    root.classList.toggle('is-facing-left', dir < 0);
+  // Encolhe-se no ninho quando um projeto, uma imagem ou o formulário passa
+  // por trás dele, para nunca tapar o conteúdo.
+  const blockers = [...document.querySelectorAll<HTMLElement>('[data-fred], figure, form')];
+  let duckFrame = 0;
+  const checkDuck = () => {
+    duckFrame = 0;
+    if (menuOpen) return root.classList.remove('is-ducking');
+    const me = root.getBoundingClientRect();
+    const over = blockers.some((el) => {
+      const r = el.getBoundingClientRect();
+      return r.left < me.right && r.right > me.left && r.top < me.bottom && r.bottom > me.top + me.height * 0.3;
+    });
+    root.classList.toggle('is-ducking', over);
+  };
+  const queueDuck = () => {
+    if (!duckFrame) duckFrame = requestAnimationFrame(checkDuck);
   };
 
-  const placeAt = (nx: number, dur = 0) => {
-    root.style.setProperty('--walk-dur', `${dur}ms`);
-    root.style.setProperty('--x', `${nx}px`);
-    x = nx;
-    root.classList.toggle('is-left', nx + size() / 2 < window.innerWidth / 2);
-  };
-
-  const walkTo = async (target: number, allowOffscreen = false) => {
-    const nx = allowOffscreen ? target : clampX(target);
-    const dist = Math.abs(nx - x);
-    if (dist < 8) return;
-    const dur = (dist / WALK_SPEED) * 1000;
-    setFacing(nx < x ? -1 : 1);
-    root.classList.remove('is-sitting', 'is-back');
-    root.classList.add('is-walking');
-    placeAt(nx, dur);
-    await wait(dur);
-    root.classList.remove('is-walking');
-  };
-
-  window.addEventListener('resize', () => {
-    if (!busy) placeAt(clampX(x));
-  });
-
-  // ---------- rotinas automáticas ----------
+  // ---------- rotinas automáticas (todas sem sair do ninho) ----------
   const routines: Record<string, () => Promise<void>> = {
-    async stroll() {
-      // vai a um sítio novo, nem muito perto nem muito longe (no máximo uns 5 s a andar)
-      const span = maxX() - minX();
-      const step = Math.min(550, span * 0.45);
-      const dir = x - step < minX() ? 1 : x + step > maxX() ? -1 : Math.random() < 0.5 ? -1 : 1;
-      const target = x + dir * step * (0.5 + Math.random() * 0.5);
-      await walkTo(target);
-      await wait(500);
-      // para e olha à volta
+    async look() {
+      // espreita à volta
       setEyes(-3, -1);
-      await wait(700);
+      await wait(900);
       setEyes(3, -1);
-      await wait(700);
+      await wait(900);
+      setEyes(0, 0);
     },
-    async peek() {
-      // vai para a borda, fica de costas a "esconder-se" e depois espreita
-      const toLeft = x < window.innerWidth / 2;
-      const start = x;
-      await walkTo(toLeft ? -size() * 0.55 : window.innerWidth - size() * 0.45, true);
-      root.classList.add('is-back');
-      await wait(1400);
-      root.classList.remove('is-back');
-      setFacing(toLeft ? 1 : -1);
-      setEyes(2, 0);
-      await wait(2600);
-      await walkTo(start);
+    async hide() {
+      // esconde-se no ninho e volta a espreitar
+      root.classList.add('is-ducking');
+      await wait(1800);
+      root.classList.remove('is-ducking');
+      flash('is-surprised', 700);
+      await wait(800);
+      queueDuck();
     },
     async stretch() {
       flash('is-stretching', 1600);
@@ -172,15 +159,11 @@ if (root && returnBtn) {
       root.classList.add('is-sitting', 'is-reading');
       await wait(4500);
       root.classList.remove('is-sitting', 'is-reading');
-      if (Math.random() < 0.5) tease('This book is great, by the way.', 2600, '');
     },
     async sit() {
-      // senta-se um bocado a ver a página
       root.classList.add('is-sitting');
       await wait(1500);
       setEyes(-2, -1);
-      await wait(1500);
-      setEyes(2, -1);
       await wait(2500);
       root.classList.remove('is-sitting');
       await wait(400);
@@ -188,13 +171,13 @@ if (root && returnBtn) {
   };
 
   const weighted: [string, number][] = [
-    ['stroll', 4],
-    ['peek', 1],
+    ['look', 2],
+    ['hide', 1],
     ['stretch', 1.5],
     ['yawn', 1],
-    ['juggle', 1.5],
+    ['juggle', 1],
     ['read', 1],
-    ['sit', 1.5],
+    ['sit', 2],
   ];
 
   const pickRoutine = () => {
@@ -204,7 +187,7 @@ if (root && returnBtn) {
       r -= w;
       if (r <= 0) return name;
     }
-    return 'stroll';
+    return 'look';
   };
 
   const scheduleNext = () => {
@@ -213,7 +196,7 @@ if (root && returnBtn) {
   };
 
   const runRoutine = async () => {
-    if (!reduced && !busy && !sleeping && !isHidden() && !document.hidden) {
+    if (!reduced && !busy && !sleeping && !menuOpen && !isHidden() && !document.hidden) {
       busy = true;
       try {
         await routines[pickRoutine()]();
@@ -226,7 +209,7 @@ if (root && returnBtn) {
 
   // ---------- adormecer / acordar ----------
   const fallAsleep = () => {
-    if (isHidden() || busy) {
+    if (isHidden() || busy || menuOpen) {
       idleTimer = window.setTimeout(fallAsleep, IDLE_MS);
       return;
     }
@@ -251,10 +234,78 @@ if (root && returnBtn) {
     window.setTimeout(blinkLoop, 2500 + Math.random() * 3500);
   };
 
+  // ---------- menu: atalhos ou guia ----------
+  const link = (label: string, href: string, cls = '') => {
+    const li = document.createElement('li');
+    const a = document.createElement('a');
+    a.textContent = label;
+    a.href = href;
+    if (cls) a.className = cls;
+    li.appendChild(a);
+    menuList.appendChild(li);
+    return a;
+  };
+
+  const sectionLinks: HTMLAnchorElement[] = [];
+  if (isCase) {
+    menuTitle.textContent = 'On this page';
+    link('Overview', '#top');
+    sections.forEach((el, i) => {
+      if (!el.id) el.id = `section-${i + 1}`;
+      sectionLinks.push(link(el.dataset.fredSection ?? '', `#${el.id}`));
+    });
+    if (nextLink) link(`Next: ${nextLink.querySelector('.case__next-title')?.textContent?.replace('→', '').trim() ?? ''} →`, nextLink.href, 'is-next');
+    menuProgress.hidden = false;
+  } else {
+    menuTitle.textContent = 'Where to?';
+    const home = document.querySelector('#work') ? '' : withBase('/');
+    link('See the projects', `${home}#work`);
+    link('Get in touch', `${home}#contact`);
+    link('Back to the top', '#top');
+  }
+
+  // Secção atual e quanto falta ler
+  const updateGuide = () => {
+    if (!isCase) return;
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    menu.style.setProperty('--read', String(max > 0 ? Math.min(1, window.scrollY / max) : 1));
+    let current = -1;
+    sections.forEach((el, i) => {
+      if (el.getBoundingClientRect().top < window.innerHeight * 0.45) current = i;
+    });
+    sectionLinks.forEach((a, i) => a.classList.toggle('is-current', i === current));
+  };
+
+  const setMenu = (open: boolean) => {
+    menuOpen = open;
+    menu.hidden = !open;
+    btn.setAttribute('aria-expanded', String(open));
+    if (open) {
+      bubble.classList.remove('is-visible');
+      updateGuide();
+    }
+    queueDuck();
+  };
+
+  menuList.addEventListener('click', (e) => {
+    if ((e.target as Element).closest('a')) setMenu(false);
+  });
+  document.addEventListener('click', (e) => {
+    if (menuOpen && !root.contains(e.target as Node)) setMenu(false);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && menuOpen) {
+      setMenu(false);
+      btn.focus();
+    }
+  });
+
   // ---------- mostrar / esconder ----------
   const setHidden = (hidden: boolean) => {
     root.classList.toggle('is-hidden', hidden);
+    nests.forEach((n) => n.classList.toggle('is-away', hidden));
     returnBtn.hidden = !hidden;
+    if (hidden) setMenu(false);
     try {
       if (hidden) localStorage.setItem(STORAGE_KEY, '1');
       else localStorage.removeItem(STORAGE_KEY);
@@ -277,39 +328,29 @@ if (root && returnBtn) {
     /* ignora */
   }
   setHidden(startHidden);
-  setFacing(-1);
-  placeAt(maxX());
 
   // ---------- interação direta ----------
   btn.addEventListener('click', () => {
     wakeUp();
     root.classList.remove('is-sitting');
-    if (!reduced) flash('is-jumping', 700);
-    say(clickLines[Math.min(clicks, clickLines.length - 1)]);
-    clicks++;
+    if (!reduced) flash('is-hopping', 600);
+    setMenu(!menuOpen);
   });
 
-  // ---------- rato: olhos, e foge um passinho se chegarem muito perto ----------
+  // ---------- rato: olhos, e encolhe-se se chegarem muito perto ----------
   window.addEventListener(
     'pointermove',
     (e) => {
       wakeUp();
       lookAt(e.clientX, e.clientY);
 
-      if (reduced || busy || isHidden() || e.pointerType !== 'mouse') return;
+      if (reduced || busy || menuOpen || isHidden() || e.pointerType !== 'mouse') return;
       const r = btn.getBoundingClientRect();
-      const dx = e.clientX - (r.left + r.width / 2);
-      const dist = Math.hypot(dx, e.clientY - (r.top + r.height / 2));
+      const dist = Math.hypot(e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2));
       const now = Date.now();
       if (dist < r.width * 0.9 && dist > r.width * 0.55 && now - lastDodge > 45000) {
         lastDodge = now;
-        busy = true;
-        // afasta-se um passinho, vira-se e põe as mãos na cintura
-        walkTo(x - Math.sign(dx || 1) * 90).finally(() => {
-          setFacing(dx > 0 ? 1 : -1);
-          busy = false;
-          tease(pick(['Hey, personal space!', 'Whoa, careful!', 'You can click me, you know.']));
-        });
+        tease(pick(['Hey, personal space!', 'Whoa, careful!', 'Click me, I know my way around.']));
       }
     },
     { passive: true },
@@ -368,6 +409,8 @@ if (root && returnBtn) {
     'scroll',
     () => {
       wakeUp();
+      queueDuck();
+      if (menuOpen) updateGuide();
       const y = window.scrollY;
       const t = performance.now();
       const speed = Math.abs(y - lastY) / Math.max(1, t - lastT); // px por ms
@@ -387,31 +430,61 @@ if (root && returnBtn) {
     { passive: true },
   );
 
-  // ---------- acenar quando chega ao contacto ----------
-  const contact = document.querySelector('[data-fred-zone="contact"]');
-  if (contact && 'IntersectionObserver' in window) {
-    new IntersectionObserver(
+  // ---------- momentos especiais ----------
+  const onceVisible = (el: Element | null, fn: () => void, threshold = 0.4) => {
+    if (!el || !('IntersectionObserver' in window)) return;
+    const io = new IntersectionObserver(
       ([entry]) => {
-        if (!entry.isIntersecting || waved || isHidden()) return;
-        waved = true;
-        flash('is-waving', 2000);
-        say('Psst… say hi to Gonçalo!', 3500);
-        lastTease = Date.now();
+        if (!entry.isIntersecting || !ready || isHidden()) return;
+        io.disconnect();
+        fn();
       },
-      { threshold: 0.4 },
-    ).observe(contact);
-  }
+      { threshold },
+    );
+    io.observe(el);
+  };
 
-  // ---------- olá inicial ----------
-  window.setTimeout(() => {
-    if (isHidden()) return;
-    if (!reduced) flash('is-waving', 2000);
-    say('Hi! I’m Fred. Have a look around.', 3500);
+  // Acena quando chega ao contacto
+  onceVisible(document.querySelector('[data-fred-zone="contact"]'), () => {
+    if (waved) return;
+    waved = true;
+    flash('is-waving', 2000);
+    say('Psst… say hi to Gonçalo!', 3500);
     lastTease = Date.now();
-  }, 1400);
+  });
 
-  idleTimer = window.setTimeout(fallAsleep, IDLE_MS);
-  blinkLoop();
-  // o primeiro passeio vem mais cedo, para se perceber que ele está vivo
-  window.setTimeout(runRoutine, 9000);
+  // No fim de um case study, aponta para o projeto seguinte
+  onceVisible(document.querySelector('.case__next'), () => {
+    flash('is-waving', 2000);
+    say('Next one’s a good one →', 3200);
+    lastTease = Date.now();
+  });
+
+  // Festeja quando a mensagem do formulário é enviada
+  window.addEventListener('contact:sent', () => {
+    if (isHidden()) return;
+    wakeUp();
+    if (!reduced) flash('is-jumping', 700);
+    say('Yay! Message sent. Gonçalo will reply soon.', 3800);
+    lastTease = Date.now();
+  });
+
+  // ---------- arranque: só depois de o Fred estar à vista ----------
+  root.addEventListener(
+    'fred:ready',
+    () => {
+      ready = true;
+      placeHome();
+      checkDuck();
+      if (!isHidden()) {
+        if (!reduced) flash('is-waving', 2000);
+        say(isCase ? 'Click me for a map of this page.' : 'Hi! I’m Fred. Click me if you get lost.', 3500);
+        lastTease = Date.now();
+      }
+      idleTimer = window.setTimeout(fallAsleep, IDLE_MS);
+      blinkLoop();
+      window.setTimeout(runRoutine, 12000);
+    },
+    { once: true },
+  );
 }

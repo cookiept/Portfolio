@@ -17,7 +17,7 @@ const smooth = (a: number, b: number, x: number) => {
 export function mountFred3D(root: HTMLElement) {
   const btn = root.querySelector<HTMLElement>('.fred__btn');
   const eyesSvg = root.querySelector<SVGGElement>('.fred__eyes');
-  if (!btn || !eyesSvg) return;
+  if (!btn || !eyesSvg) return false;
 
   const canvas = document.createElement('canvas');
   canvas.className = 'fred__canvas';
@@ -27,7 +27,7 @@ export function mountFred3D(root: HTMLElement) {
   try {
     renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'low-power' });
   } catch {
-    return; // sem WebGL: fica o SVG
+    return false; // sem WebGL: fica o SVG
   }
   btn.appendChild(canvas);
   root.classList.add('is-3d');
@@ -453,4 +453,120 @@ export function mountFred3D(root: HTMLElement) {
     }
   });
   raf = requestAnimationFrame(frame);
+  return true;
+}
+
+// ---------- ninho ----------
+// O ninho fica parado no canto e é desenhado em duas camadas: a de trás
+// (por trás do Fred) e a da frente (à frente das patas), para ele parecer
+// sentado lá dentro. Só se volta a desenhar quando muda de tamanho.
+export function mountNest(backEl: HTMLElement, frontEl: HTMLElement) {
+  const layers = [backEl, frontEl].map((el) => {
+    const canvas = document.createElement('canvas');
+    canvas.setAttribute('aria-hidden', 'true');
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'low-power' });
+    } catch {
+      return null;
+    }
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.1;
+    el.appendChild(canvas);
+    const scene = new THREE.Scene();
+    scene.add(new THREE.HemisphereLight(0xf2f6ff, 0x2a2018, 1.4));
+    const key = new THREE.DirectionalLight(0xfff4e6, 1.8);
+    key.position.set(-3, 5, 5);
+    scene.add(key);
+    const rim = new THREE.DirectionalLight(0xbcd4ff, 0.9);
+    rim.position.set(2, 3, -4);
+    scene.add(rim);
+    return { el, canvas, renderer, scene };
+  });
+  if (layers.some((l) => !l)) return false;
+  const [back, front] = layers as NonNullable<(typeof layers)[number]>[];
+
+  const camera = new THREE.PerspectiveCamera(26, 2, 0.1, 50);
+  camera.position.set(0, 1.25, 3.5);
+  camera.lookAt(0, 0.38, 0);
+
+  // Palhinhas em tons de madeira e palha, com um pouco de acaso (fixo)
+  let seed = 7;
+  const rand = () => {
+    seed = (seed * 16807) % 2147483647;
+    return seed / 2147483647;
+  };
+  const tones = [0x8a6542, 0x6e4f33, 0xa47c50, 0xc2a070, 0x5b412b, 0xb38b5c];
+  const mats = tones.map((c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.92 }));
+  const twigGeo = new THREE.CylinderGeometry(1, 1, 1, 6, 1);
+  const up = new THREE.Vector3(0, 1, 0);
+
+  const HEIGHT = 0.55;
+  for (let i = 0; i < 360; i++) {
+    const a = rand() * Math.PI * 2;
+    const h = rand() * HEIGHT;
+    const t = h / HEIGHT;
+    const r = 1.0 + Math.sin(t * Math.PI * 0.85) * 0.3 + (rand() - 0.3) * 0.22;
+    const len = 0.5 + rand() * 0.7;
+    const thick = 0.026 + rand() * 0.028;
+    const m = new THREE.Mesh(twigGeo, mats[Math.floor(rand() * mats.length)]);
+    m.scale.set(thick, len, thick);
+    m.position.set(Math.cos(a) * r, h + 0.04, Math.sin(a) * r);
+    // deitada à volta do ninho, com inclinação e torção ao acaso
+    const tangent = new THREE.Vector3(-Math.sin(a), (rand() - 0.5) * 0.7, Math.cos(a)).normalize();
+    m.quaternion.setFromUnitVectors(up, tangent);
+    m.rotateOnWorldAxis(new THREE.Vector3(Math.cos(a), 0, Math.sin(a)), (rand() - 0.5) * 0.5);
+    (m.position.z >= 0 ? front : back).scene.add(m);
+  }
+  // Pontas soltas a sair do ninho
+  for (let i = 0; i < 16; i++) {
+    const a = rand() * Math.PI * 2;
+    const m = new THREE.Mesh(twigGeo, mats[Math.floor(rand() * 3)]);
+    m.scale.set(0.016, 0.45 + rand() * 0.3, 0.016);
+    m.position.set(Math.cos(a) * 1.35, 0.35 + rand() * 0.2, Math.sin(a) * 1.35);
+    const out = new THREE.Vector3(Math.cos(a), 0.6 + rand() * 0.5, Math.sin(a)).normalize();
+    m.quaternion.setFromUnitVectors(up, out);
+    (m.position.z >= 0 ? front : back).scene.add(m);
+  }
+  // Fundo do ninho: uma taça escura e macia
+  const bowl = new THREE.Mesh(
+    new THREE.SphereGeometry(1, 32, 16, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2),
+    new THREE.MeshStandardMaterial({ color: 0x4a3524, roughness: 1, side: THREE.DoubleSide }),
+  );
+  bowl.scale.set(1.12, 0.42, 1.12);
+  bowl.position.y = 0.5;
+  back.scene.add(bowl);
+
+  // Sombra no chão
+  const s = document.createElement('canvas');
+  s.width = s.height = 128;
+  const g = s.getContext('2d')!;
+  const grd = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  grd.addColorStop(0, 'rgba(0,0,0,0.55)');
+  grd.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = grd;
+  g.fillRect(0, 0, 128, 128);
+  const shadow = new THREE.Mesh(
+    new THREE.PlaneGeometry(3.6, 2.2),
+    new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(s), transparent: true, depthWrite: false }),
+  );
+  shadow.rotation.x = -Math.PI / 2;
+  back.scene.add(shadow);
+
+  const draw = () => {
+    for (const l of [back, front]) {
+      const w = l.el.clientWidth || 1;
+      const h = l.el.clientHeight || 1;
+      l.renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      // a camada da frente tem de esconder o que está atrás dela no ninho
+      l.renderer.render(l.scene, camera);
+    }
+  };
+  draw();
+  new ResizeObserver(draw).observe(back.el);
+  return true;
 }

@@ -1,9 +1,10 @@
 ---
 // Fred: a mascote do site, um passarinho azul em 3D (src/scripts/fred3d.ts),
-// com uma versão em SVG enquanto o 3D carrega ou se não houver WebGL. Vive no fundo do ecrã:
-// passeia de um lado para o outro (de perfil), entretém-se sozinho, segue
-// o rato com os olhos, reage aos projetos e ao contacto e mete-se com o
-// visitante de vez em quando. A lógica está em src/scripts/fred.ts.
+// com uma versão em SVG se não houver WebGL. Vive num ninho 3D no canto
+// inferior direito, sempre no mesmo sítio em todas as páginas. Ao clicar
+// abre atalhos (página inicial) ou o guia das secções (páginas de projeto).
+// Encolhe-se no ninho quando um projeto passa por trás dele.
+// A lógica está em src/scripts/fred.ts.
 //
 // Poses (classes no [data-fred-root]):
 //   is-waving   acena com a asa direita
@@ -14,10 +15,16 @@
 //   is-back     de costas
 ---
 
-<div class="fred" data-fred-root>
+<div class="fred-nest fred-nest--back" data-fred-nest="back" aria-hidden="true"></div>
+<div class="fred is-booting is-nesting" data-fred-root>
   <div class="fred__stage">
     <p class="fred__bubble" aria-hidden="true"></p>
-    <button class="fred__btn" type="button" aria-label="Fred, the site mascot. Click to say hi.">
+    <div class="fred__menu" id="fred-menu" hidden>
+      <p class="fred__menu-title"></p>
+      <ul class="fred__menu-list"></ul>
+      <div class="fred__menu-progress" hidden><span></span></div>
+    </div>
+    <button class="fred__btn" type="button" aria-label="Fred, the site guide" aria-expanded="false" aria-controls="fred-menu">
       <svg class="fred__svg" viewBox="0 0 100 100" aria-hidden="true">
         <defs>
           <radialGradient id="fred-body" cx="38%" cy="26%" r="80%">
@@ -145,6 +152,7 @@
     <button class="fred__hide" type="button" aria-label="Hide Fred">×</button>
   </div>
 </div>
+<div class="fred-nest fred-nest--front" data-fred-nest="front" aria-hidden="true"></div>
 <button class="fred-return" type="button" hidden aria-label="Bring Fred back">
   <svg viewBox="0 0 100 100" aria-hidden="true">
     <path d="M50 12C69 12 80 25 80 41c0 6-1.5 10-.6 14 5.6 7 6.8 16.5 3.4 24.5C78.6 88.6 66 92 50 92S21.4 88.6 17.2 79.5C13.8 71.5 15 62 20.6 55c.9-4-.6-8-.6-14C20 25 31 12 50 12z" fill="currentColor"></path>
@@ -655,6 +663,179 @@
     opacity: 1;
   }
 
+  /* ---------- Ninho ---------- */
+  /* Duas camadas fixas no canto: a de trás fica por trás do Fred e a da
+     frente tapa-lhe as patas, para parecer que está sentado lá dentro. */
+  .fred-nest {
+    --size: 5.5rem;
+    position: fixed;
+    right: calc(var(--space-4) + env(safe-area-inset-right, 0px));
+    bottom: calc(env(safe-area-inset-bottom, 0px) - var(--size) * 0.06);
+    width: calc(var(--size) * 1.8);
+    height: calc(var(--size) * 0.9);
+    pointer-events: none;
+    opacity: 0;
+    transition:
+      opacity var(--dur-base) var(--ease-out),
+      transform var(--dur-base) var(--ease-settle);
+  }
+
+  .fred-nest--back {
+    z-index: 49;
+  }
+
+  .fred-nest--front {
+    z-index: 51;
+  }
+
+  .fred-nest.is-ready {
+    opacity: 1;
+  }
+
+  .fred-nest.is-away {
+    transform: translateY(120%);
+    opacity: 0;
+  }
+
+  .fred-nest :global(canvas) {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Enquanto o 3D carrega não se vê nada, para não aparecer primeiro o
+     Fred em SVG e depois o 3D por cima */
+  .fred.is-booting .fred__btn {
+    opacity: 0;
+  }
+
+  .fred__btn {
+    transition: opacity var(--dur-base) var(--ease-out);
+  }
+
+  /* No ninho: um pouco mais em baixo, sentado lá dentro */
+  .fred.is-nesting .fred__btn {
+    transform: translateY(4%);
+  }
+
+  /* Quando um projeto passa por trás, encolhe-se e só se vê a cabeça */
+  .fred.is-ducking .fred__btn {
+    transform: translateY(62%);
+  }
+
+  .fred.is-nesting .fred__btn,
+  .fred.is-ducking .fred__btn {
+    transition:
+      opacity var(--dur-base) var(--ease-out),
+      transform 0.45s var(--ease-settle);
+  }
+
+  .fred.is-ducking .fred__bubble {
+    opacity: 0;
+  }
+
+  /* ---------- Menu: atalhos ou guia da página ---------- */
+  .fred__menu {
+    position: absolute;
+    right: 10%;
+    bottom: calc(100% + var(--space-3));
+    width: min(16rem, calc(100vw - 2rem));
+    padding: var(--space-4);
+    border: 1px solid var(--color-line-strong);
+    border-radius: 18px 18px 4px 18px;
+    background: rgb(17 19 26 / 0.92);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 20px 40px -12px rgb(0 0 0 / 0.6);
+    transform-origin: 100% 100%;
+    animation: menu-in 0.25s var(--ease-out);
+  }
+
+  .fred__menu[hidden] {
+    display: none;
+  }
+
+  .fred__menu-title {
+    margin-bottom: var(--space-2);
+    font-size: var(--text-sm);
+    color: var(--color-text-2);
+  }
+
+  .fred__menu-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 2px;
+  }
+
+  .fred__menu-list :global(a) {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border-radius: 10px;
+    color: var(--color-text);
+    text-decoration: none;
+    font-size: var(--text-sm);
+  }
+
+  .fred__menu-list :global(a::before) {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-line-strong);
+    flex: none;
+  }
+
+  .fred__menu-list :global(a:hover),
+  .fred__menu-list :global(a:focus-visible) {
+    background: var(--color-surface-2);
+  }
+
+  .fred__menu-list :global(a.is-current) {
+    color: var(--color-accent);
+  }
+
+  .fred__menu-list :global(a.is-current::before) {
+    background: var(--color-accent);
+    box-shadow: 0 0 8px var(--color-accent);
+  }
+
+  .fred__menu-list :global(a.is-next) {
+    margin-top: var(--space-2);
+    border-top: 1px solid var(--color-line);
+    border-radius: 0 0 10px 10px;
+    padding-top: var(--space-3);
+  }
+
+  .fred__menu-list :global(a.is-next::before) {
+    display: none;
+  }
+
+  .fred__menu-progress {
+    height: 3px;
+    margin-top: var(--space-3);
+    border-radius: 3px;
+    background: var(--color-line);
+    overflow: hidden;
+  }
+
+  .fred__menu-progress span {
+    display: block;
+    height: 100%;
+    width: calc(var(--read, 0) * 100%);
+    background: var(--color-accent);
+    transition: width 0.2s linear;
+  }
+
+  @keyframes menu-in {
+    from {
+      opacity: 0;
+      transform: translateY(0.5rem) scale(0.95);
+    }
+  }
+
   .fred-return {
     position: fixed;
     right: calc(var(--space-6) + env(safe-area-inset-right, 0px));
@@ -685,7 +866,8 @@
   }
 
   @media (max-width: 40rem) {
-    .fred {
+    .fred,
+    .fred-nest {
       --size: 4.25rem;
     }
   }
@@ -702,12 +884,31 @@
 <script>
   import '../../scripts/fred';
 
-  // O Fred em 3D carrega depois do resto da página, para não a atrasar.
-  // Até lá (ou sem WebGL) vê-se o Fred em SVG.
+  // O Fred e o ninho em 3D carregam logo a seguir à página. Até estarem
+  // prontos não se vê nada; se não houver WebGL (ou demorar demasiado),
+  // aparece o Fred em SVG sem ninho.
   const root = document.querySelector<HTMLElement>('[data-fred-root]');
-  if (root) {
-    const load = () => import('../../scripts/fred3d').then((m) => m.mountFred3D(root));
-    if ('requestIdleCallback' in window) requestIdleCallback(load, { timeout: 2500 });
-    else window.setTimeout(load, 1200);
+  const nestBack = document.querySelector<HTMLElement>('[data-fred-nest="back"]');
+  const nestFront = document.querySelector<HTMLElement>('[data-fred-nest="front"]');
+  if (root && nestBack && nestFront) {
+    let done = false;
+    const ready = (nest: boolean) => {
+      if (done) return;
+      done = true;
+      root.classList.remove('is-booting');
+      if (nest) [nestBack, nestFront].forEach((el) => el.classList.add('is-ready'));
+      root.dispatchEvent(new CustomEvent('fred:ready', { detail: { nest } }));
+    };
+    const fallback = window.setTimeout(() => ready(false), 6000);
+    import('../../scripts/fred3d')
+      .then((m) => {
+        if (done) return; // já se mostrou o SVG: não troca a meio
+        const ok = m.mountFred3D(root);
+        const nest = ok && m.mountNest(nestBack, nestFront);
+        window.clearTimeout(fallback);
+        // espera um frame para o primeiro desenho do 3D já estar no ecrã
+        requestAnimationFrame(() => requestAnimationFrame(() => ready(!!nest)));
+      })
+      .catch(() => ready(false));
   }
 </script>

@@ -32,6 +32,8 @@ if (form) {
       if (!response.ok || result.success === 'false' || result.success === false) throw new Error();
 
       form.reset();
+      // o Fred festeja
+      window.dispatchEvent(new CustomEvent('contact:sent'));
       setStatus('Thanks! Your message is on its way. I’ll get back to you soon.', 'sent');
     } catch {
       setStatus('Something went wrong. Please try again, or message me on Instagram.', 'error');
