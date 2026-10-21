@@ -24,7 +24,7 @@ const href = placeholder ? undefined : withBase(`/projects/${project.id}/`);
     <div class="project__media">
       {
         cover ? (
-          <Image src={cover} alt={`${title} preview`} widths={[480, 800, 1200]} sizes="(max-width: 40rem) 100vw, 50vw" />
+          <Image src={cover} alt={`${title} preview`} widths={[480, 800, 1200, 1600, 2400]} quality={90} sizes="(max-width: 40rem) 100vw, 50vw" />
         ) : (
           <div class:list={['project__placeholder', `project__placeholder--${kind}`]} aria-hidden="true">
             <span class="project__device" />
