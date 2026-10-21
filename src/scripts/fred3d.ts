@@ -503,7 +503,7 @@ export function mountNest(backEl: HTMLElement, frontEl: HTMLElement) {
   const twigGeo = new THREE.CylinderGeometry(1, 1, 1, 6, 1);
   const up = new THREE.Vector3(0, 1, 0);
 
-  const HEIGHT = 0.55;
+  const HEIGHT = 0.42;
   for (let i = 0; i < 360; i++) {
     const a = rand() * Math.PI * 2;
     const h = rand() * HEIGHT;
@@ -525,18 +525,59 @@ export function mountNest(backEl: HTMLElement, frontEl: HTMLElement) {
     const a = rand() * Math.PI * 2;
     const m = new THREE.Mesh(twigGeo, mats[Math.floor(rand() * 3)]);
     m.scale.set(0.016, 0.45 + rand() * 0.3, 0.016);
-    m.position.set(Math.cos(a) * 1.35, 0.35 + rand() * 0.2, Math.sin(a) * 1.35);
+    m.position.set(Math.cos(a) * 1.32, 0.28 + rand() * 0.16, Math.sin(a) * 1.32);
     const out = new THREE.Vector3(Math.cos(a), 0.6 + rand() * 0.5, Math.sin(a)).normalize();
     m.quaternion.setFromUnitVectors(up, out);
     (m.position.z >= 0 ? front : back).scene.add(m);
   }
+  // Palhinhas finas e claras entrelaçadas, para parecer um ninho a sério
+  const strawMats = [0xe2c98f, 0xd4b673, 0xc9a65f, 0xeedcae].map(
+    (c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.75 }),
+  );
+  const strawGeo = new THREE.CylinderGeometry(1, 1, 1, 4, 1);
+  for (let i = 0; i < 420; i++) {
+    const a = rand() * Math.PI * 2;
+    const h = rand() * HEIGHT * 1.05;
+    const t = h / HEIGHT;
+    const r = 1.0 + Math.sin(Math.min(1, t) * Math.PI * 0.85) * 0.3 + (rand() - 0.4) * 0.26;
+    const m = new THREE.Mesh(strawGeo, strawMats[Math.floor(rand() * strawMats.length)]);
+    m.scale.set(0.007 + rand() * 0.006, 0.35 + rand() * 0.55, 0.007 + rand() * 0.006);
+    m.position.set(Math.cos(a) * r, h + 0.05, Math.sin(a) * r);
+    const dir = new THREE.Vector3(-Math.sin(a), (rand() - 0.5) * 1.1, Math.cos(a)).normalize();
+    m.quaternion.setFromUnitVectors(up, dir);
+    m.rotateOnWorldAxis(new THREE.Vector3(Math.cos(a), 0, Math.sin(a)), (rand() - 0.5) * 0.9);
+    (m.position.z >= 0 ? front : back).scene.add(m);
+  }
+  // Palhas soltas a espetar para fora e algumas caídas no chão
+  for (let i = 0; i < 40; i++) {
+    const a = rand() * Math.PI * 2;
+    const ground = i < 8;
+    const m = new THREE.Mesh(strawGeo, strawMats[Math.floor(rand() * strawMats.length)]);
+    m.scale.set(0.006, 0.3 + rand() * 0.35, 0.006);
+    const rr = ground ? 1.45 + rand() * 0.3 : 1.25 + rand() * 0.1;
+    m.position.set(Math.cos(a) * rr, ground ? 0.01 : 0.15 + rand() * 0.3, Math.sin(a) * rr);
+    const dir = ground
+      ? new THREE.Vector3(-Math.sin(a) + (rand() - 0.5), 0.02, Math.cos(a) + (rand() - 0.5)).normalize()
+      : new THREE.Vector3(Math.cos(a) + (rand() - 0.5) * 0.8, 0.3 + rand() * 0.9, Math.sin(a)).normalize();
+    m.quaternion.setFromUnitVectors(up, dir);
+    (m.position.z >= 0 ? front : back).scene.add(m);
+  }
+  // Uma pena azul perdida, do Fred
+  const feather = new THREE.Mesh(
+    new THREE.SphereGeometry(1, 12, 8),
+    new THREE.MeshStandardMaterial({ color: 0x9fbdf0, roughness: 0.8 }),
+  );
+  feather.scale.set(0.05, 0.012, 0.16);
+  feather.position.set(1.15, 0.47, 0.35);
+  feather.rotation.set(0.3, 0.9, 0.4);
+  front.scene.add(feather);
   // Fundo do ninho: uma taça escura e macia
   const bowl = new THREE.Mesh(
     new THREE.SphereGeometry(1, 32, 16, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2),
     new THREE.MeshStandardMaterial({ color: 0x4a3524, roughness: 1, side: THREE.DoubleSide }),
   );
-  bowl.scale.set(1.12, 0.42, 1.12);
-  bowl.position.y = 0.5;
+  bowl.scale.set(1.08, 0.36, 1.08);
+  bowl.position.y = 0.4;
   back.scene.add(bowl);
 
   // Sombra no chão
@@ -554,6 +595,9 @@ export function mountNest(backEl: HTMLElement, frontEl: HTMLElement) {
   );
   shadow.rotation.x = -Math.PI / 2;
   back.scene.add(shadow);
+
+  // um pouco mais estreito do que fundo
+  back.scene.scale.x = front.scene.scale.x = 0.84;
 
   const draw = () => {
     for (const l of [back, front]) {
