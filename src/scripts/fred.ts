@@ -3,9 +3,8 @@
 // as páginas. Não passeia pela página (para não tapar os projetos): fica no
 // ninho, entretém-se com pequenas rotinas, segue o rato com os olhos e
 // encolhe-se quando um projeto passa por trás dele.
-// No ninho há um ovo por projeto: abrir um projeto choca o ovo dele (fica
-// guardado no browser) e ver todos dá um ovo dourado. Nos case studies,
-// quando um ecrã com nota ([data-fred-note]) aparece, conta a curiosidade.
+// Clicar nele abre um balão com os contactos. Nos case studies, quando um
+// ecrã com nota ([data-fred-note]) aparece, conta a curiosidade.
 
 const root = document.querySelector<HTMLElement>('[data-fred-root]');
 const returnBtn = document.querySelector<HTMLButtonElement>('.fred-return');
@@ -14,6 +13,8 @@ if (root && returnBtn) {
   const btn = root.querySelector<HTMLButtonElement>('.fred__btn')!;
   const hideBtn = root.querySelector<HTMLButtonElement>('.fred__hide')!;
   const bubble = root.querySelector<HTMLElement>('.fred__bubble')!;
+  const bubbleText = bubble.querySelector<HTMLElement>('.fred__text')!;
+  const panel = root.querySelector<HTMLElement>('.fred__panel')!;
   const eyes = root.querySelector<SVGGElement>('.fred__eyes')!;
   const nests = [...document.querySelectorAll<HTMLElement>('[data-fred-nest]')];
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -46,8 +47,24 @@ if (root && returnBtn) {
     window.setTimeout(() => root.classList.remove(cls), ms);
   };
 
+  // As palavras entram uma a uma (ver .fred__w no Fred.astro)
   const say = (text: string, ms = 2800) => {
-    bubble.textContent = text;
+    if (panel.classList.contains('is-visible')) return;
+    bubbleText.replaceChildren(
+      ...text.split(' ').flatMap((word, i) => {
+        const w = document.createElement('span');
+        w.className = 'fred__w';
+        w.style.setProperty('--i', String(i));
+        w.textContent = word;
+        return i ? [' ', w] : [w];
+      }),
+    );
+    if (bubble.classList.contains('is-visible')) {
+      // já estava aberto: reinicia as palavras e a gota estremece
+      bubble.classList.remove('is-visible', 'is-jelly');
+      void bubble.offsetWidth;
+      bubble.classList.add('is-jelly');
+    }
     bubble.classList.add('is-visible');
     window.clearTimeout(bubbleTimer);
     bubbleTimer = window.setTimeout(() => bubble.classList.remove('is-visible'), ms);
@@ -222,8 +239,29 @@ if (root && returnBtn) {
     window.setTimeout(blinkLoop, 2500 + Math.random() * 3500);
   };
 
-  const clickLines = ['Hehe, that tickles.', 'Hi! I’m Fred.', 'Careful, my nest is fragile!'];
-  let clicks = 0;
+  // ---------- balão de contactos ----------
+  let panelY = 0;
+  const setPanel = (open: boolean) => {
+    if (open === panel.classList.contains('is-visible')) return;
+    panel.classList.toggle('is-visible', open);
+    panel.inert = !open;
+    btn.setAttribute('aria-expanded', String(open));
+    panelY = window.scrollY;
+    if (open) {
+      window.clearTimeout(bubbleTimer);
+      bubble.classList.remove('is-visible');
+    }
+  };
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && panel.classList.contains('is-visible')) {
+      setPanel(false);
+      btn.focus();
+    }
+  });
+  document.addEventListener('pointerdown', (e) => {
+    if (!root.contains(e.target as Node)) setPanel(false);
+  });
+  panel.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => setPanel(false)));
 
   // ---------- notas do Fred nos case studies ----------
   // Cada ecrã com [data-fred-note] conta a sua curiosidade uma vez,
@@ -294,9 +332,9 @@ if (root && returnBtn) {
   btn.addEventListener('click', () => {
     wakeUp();
     root.classList.remove('is-sitting');
-    if (!reduced) flash('is-jumping', 700);
-    say(clickLines[clicks % clickLines.length], 3200);
-    clicks++;
+    const open = !panel.classList.contains('is-visible');
+    setPanel(open);
+    if (open && !reduced) flash('is-waving', 1400);
   });
 
   // ---------- rato: olhos, e encolhe-se se chegarem muito perto ----------
@@ -373,6 +411,7 @@ if (root && returnBtn) {
       wakeUp();
       queueDuck();
       const y = window.scrollY;
+      if (Math.abs(y - panelY) > 120) setPanel(false); // fecha ao fazer scroll
       const t = performance.now();
       const speed = Math.abs(y - lastY) / Math.max(1, t - lastT); // px por ms
       const down = y > lastY;

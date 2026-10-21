@@ -1,9 +1,10 @@
 ---
 // Fred: a mascote do site, um passarinho azul em 3D (src/scripts/fred3d.ts),
 // com uma versão em SVG se não houver WebGL. Vive num ninho 3D no canto
-// inferior direito, sempre no mesmo sítio em todas as páginas. No ninho há
-// um ovo por projeto: abrir um projeto choca o ovo, e ver todos dá uma
-// surpresa. Nos case studies conta curiosidades sobre os ecrãs (notas).
+// inferior direito, sempre no mesmo sítio em todas as páginas. Em cada case
+// study usa um adereço desse projeto. Clicar nele abre um balão com os
+// contactos. Nos case studies conta curiosidades sobre os ecrãs (notas).
+// Os balões são "líquidos": um filtro SVG (goo) junta as gotas ao balão.
 // Encolhe-se no ninho quando um projeto passa por trás dele.
 // A lógica está em src/scripts/fred.ts.
 //
@@ -14,19 +15,52 @@
 //   is-sassy    mãos (asas) na cintura
 //   is-walking  de perfil, a andar
 //   is-back     de costas
-import { getCollection } from 'astro:content';
+import { site } from '@data/site';
+import { withBase } from '../../utils/url';
 
-// Um ovo por projeto publicado
-const projects = (await getCollection('projects', ({ data }) => !data.placeholder))
-  .sort((a, b) => a.data.order - b.data.order)
-  .map((p) => p.id);
+const { instagram, linkedin, cv } = site.links;
+
+// Adereço 3D em cada case study (ver addAccessory em src/scripts/fred3d.ts)
+const ACCESSORIES: Record<string, string> = {
+  'find-your-constellation': 'stars',
+  pinnie: 'pin',
+  petsight: 'collar',
+  glowai: 'plant',
+  'fbaul-alumni': 'cap',
+};
+const slug = /\/projects\/([^/]+)/.exec(Astro.url.pathname)?.[1] ?? '';
+const accessory = ACCESSORIES[slug] ?? '';
 ---
 
 <div class="fred-nest fred-nest--back" data-fred-nest="back" aria-hidden="true"></div>
-<div class="fred is-booting is-nesting" data-fred-root data-projects={projects.join(',')}>
+<svg class="fred__defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <!-- Efeito líquido: desfoca e volta a cortar o contorno, para as gotas se fundirem -->
+  <filter id="fred-goo" x="-50%" y="-50%" width="200%" height="200%" color-interpolation-filters="sRGB">
+    <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"></feGaussianBlur>
+    <feColorMatrix in="blur" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -8" result="goo"></feColorMatrix>
+    <feComposite in="SourceGraphic" in2="goo" operator="atop"></feComposite>
+  </filter>
+</svg>
+<div class="fred is-booting is-nesting" data-fred-root data-accessory={accessory}>
   <div class="fred__stage">
-    <p class="fred__bubble" aria-hidden="true"></p>
-    <button class="fred__btn" type="button" aria-label="Fred, the site mascot. Click to say hi.">
+    <p class="fred__float fred__bubble" aria-hidden="true"><span class="fred__liquid" aria-hidden="true"><span class="fred__blob"></span><span class="fred__drop"></span><span class="fred__drop fred__drop--2"></span></span><span class="fred__text"></span></p>
+    <div class="fred__float fred__panel" id="fred-contact" inert>
+      <span class="fred__liquid" aria-hidden="true"><span class="fred__blob"></span><span class="fred__drop"></span><span class="fred__drop fred__drop--2"></span></span>
+      <div class="fred__panel-body">
+        <p class="fred__panel-title">Want to work together?</p>
+        <a class="fred__panel-link" href={withBase('/#contact')} data-fred-message>Send me a message <span aria-hidden="true">→</span></a>
+        <a class="fred__panel-link" href={linkedin.url} target="_blank" rel="noopener noreferrer">LinkedIn <span aria-hidden="true">↗</span></a>
+        <a class="fred__panel-link" href={instagram.url} target="_blank" rel="noopener noreferrer">Instagram <span aria-hidden="true">↗</span></a>
+        {
+          cv ? (
+            <a class="fred__panel-link" href={withBase('/cv.pdf')} download>Résumé <span>PDF</span></a>
+          ) : (
+            <p class="fred__panel-link is-soon">Résumé <span>soon</span></p>
+          )
+        }
+      </div>
+    </div>
+    <button class="fred__btn" type="button" aria-label="Fred, the site mascot. Open contact links." aria-expanded="false" aria-controls="fred-contact">
       <svg class="fred__svg" viewBox="0 0 100 100" aria-hidden="true">
         <defs>
           <radialGradient id="fred-body" cx="38%" cy="26%" r="80%">
@@ -604,39 +638,226 @@ const projects = (await getCollection('projects', ({ data }) => !data.placeholde
     }
   }
 
-  /* ---------- Balão de fala ---------- */
-  .fred__bubble {
+  /* ---------- Balões líquidos (fala e contactos) ---------- */
+  .fred__defs {
     position: absolute;
-    right: 30%;
-    bottom: calc(100% + var(--space-2));
+    width: 0;
+    height: 0;
+    overflow: hidden;
+  }
+
+  .fred__float {
+    --pop: cubic-bezier(0.3, 1.7, 0.5, 1);
+    position: absolute;
+    right: 34%;
+    bottom: calc(100% + var(--space-4));
+    z-index: 2;
     width: max-content;
     max-width: min(15rem, 70vw);
-    padding: var(--space-2) var(--space-3);
-    border: 1px solid var(--color-line-strong);
-    border-radius: 14px 14px 4px 14px;
-    background: var(--color-surface-2);
+    margin: 0;
     color: var(--color-text);
     font-size: var(--text-sm);
     line-height: 1.35;
-    opacity: 0;
-    transform: translateY(0.5rem) scale(0.95);
-    transform-origin: 100% 100%;
     pointer-events: none;
+  }
+
+  /* A camada com o filtro é maior que o balão, para as gotas caberem */
+  .fred__liquid {
+    position: absolute;
+    inset: -2.5rem;
+    filter: url(#fred-goo);
+    pointer-events: none;
+  }
+
+  .fred__blob,
+  .fred__drop {
+    position: absolute;
+    background:
+      radial-gradient(120% 80% at 25% 0%, rgb(169 200 255 / 0.32), transparent 60%),
+      linear-gradient(180deg, #2b3550 0%, #1b2132 100%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.22),
+      inset 0 0 0 1px rgb(169 200 255 / 0.16);
+  }
+
+  .fred__blob {
+    inset: 2.5rem;
+    border-radius: 22px;
+    transform: scale(0.12, 0.08);
+    transform-origin: 88% 120%;
+    opacity: 0;
     transition:
-      opacity var(--dur-fast) var(--ease-out),
-      transform var(--dur-fast) var(--ease-out);
+      transform 0.32s cubic-bezier(0.5, 0, 0.75, 0),
+      opacity 0.18s 0.14s linear;
   }
 
-  .fred.is-left .fred__bubble {
-    right: auto;
-    left: 30%;
-    border-radius: 14px 14px 14px 4px;
-    transform-origin: 0 100%;
+  .fred__drop {
+    right: calc(2.5rem + 0.6rem);
+    bottom: calc(2.5rem - 1.15rem);
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    transform: translate(0.6rem, 1.4rem) scale(0);
+    transition: transform 0.28s cubic-bezier(0.5, 0, 0.75, 0);
   }
 
-  .fred__bubble.is-visible {
+  .fred__drop--2 {
+    right: calc(2.5rem - 0.35rem);
+    bottom: calc(2.5rem - 2.1rem);
+    width: 0.6rem;
+    height: 0.6rem;
+  }
+
+  .fred__float.is-visible .fred__blob {
+    transform: none;
+    opacity: 1;
+    transition:
+      transform 0.7s 0.08s var(--pop),
+      opacity 0.1s 0.08s linear;
+    animation: fred-wobble 7s 0.8s ease-in-out infinite;
+  }
+
+  .fred__float.is-visible .fred__drop {
+    transform: none;
+    transition: transform 0.5s var(--pop);
+    animation: fred-drip 3.2s 0.6s ease-in-out infinite;
+  }
+
+  .fred__float.is-visible .fred__drop--2 {
+    transition-delay: 0.04s;
+    animation-duration: 2.6s;
+    animation-delay: 0.7s;
+  }
+
+  /* Texto novo com o balão já aberto: a gota estremece */
+  .fred__float.is-jelly .fred__liquid {
+    animation: fred-jelly 0.55s var(--ease-out);
+  }
+
+  .fred__text {
+    position: relative;
+    display: block;
+    padding: 0.6rem 0.9rem;
+  }
+
+  .fred__text :global(.fred__w) {
+    display: inline-block;
+    opacity: 0;
+    filter: blur(4px);
+    transform: translateY(0.3em);
+  }
+
+  .fred__float.is-visible .fred__text :global(.fred__w) {
+    animation: fred-word 0.45s calc(0.22s + var(--i) * 0.035s) var(--ease-out) forwards;
+  }
+
+  .fred__bubble:not(.is-visible) .fred__text {
+    opacity: 0;
+    transition: opacity 0.12s linear;
+  }
+
+  @keyframes fred-word {
+    to {
+      opacity: 1;
+      filter: none;
+      transform: none;
+    }
+  }
+
+  @keyframes fred-wobble {
+    0%,
+    100% {
+      border-radius: 22px 26px 20px 24px / 24px 20px 26px 22px;
+    }
+    33% {
+      border-radius: 26px 20px 25px 19px / 20px 26px 21px 25px;
+    }
+    66% {
+      border-radius: 19px 24px 22px 27px / 26px 22px 19px 24px;
+    }
+  }
+
+  @keyframes fred-drip {
+    0%,
+    100% {
+      transform: none;
+    }
+    50% {
+      transform: translate(-0.15rem, -0.3rem) scale(1.15);
+    }
+  }
+
+  @keyframes fred-jelly {
+    30% {
+      transform: scale(1.05, 0.95);
+    }
+    60% {
+      transform: scale(0.98, 1.03);
+    }
+  }
+
+  /* ---------- Balão de contactos ---------- */
+  .fred__panel {
+    width: 15rem;
+  }
+
+  .fred__panel.is-visible {
+    pointer-events: auto;
+  }
+
+  .fred__panel-body {
+    position: relative;
+    padding: var(--space-3) var(--space-3) var(--space-2);
+    opacity: 0;
+    transform: translateY(0.4rem);
+    transition:
+      opacity 0.12s linear,
+      transform 0.12s linear;
+  }
+
+  .fred__panel.is-visible .fred__panel-body {
     opacity: 1;
     transform: none;
+    transition:
+      opacity 0.3s 0.25s var(--ease-out),
+      transform 0.45s 0.25s var(--ease-settle);
+  }
+
+  .fred__panel-title {
+    margin: 0 0 var(--space-1);
+    padding: 0 0.35rem;
+    color: var(--color-text-2);
+    font-size: var(--text-xs, 0.8rem);
+  }
+
+  .fred__panel-link {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin: 0;
+    padding: 0.55rem 0.35rem;
+    border-top: 1px solid rgb(169 200 255 / 0.12);
+    color: var(--color-text);
+    text-decoration: none;
+    transition: color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+  }
+
+  .fred__panel-link:first-of-type {
+    border-top: 0;
+  }
+
+  a.fred__panel-link:hover,
+  a.fred__panel-link:focus-visible {
+    color: var(--color-accent);
+    transform: translateX(-2px);
+  }
+
+  .fred__panel-link span {
+    color: var(--color-text-2);
+  }
+
+  .fred__panel-link.is-soon {
+    color: var(--color-text-2);
   }
 
   /* ---------- Esconder / voltar ---------- */
@@ -736,6 +957,10 @@ const projects = (await getCollection('projects', ({ data }) => !data.placeholde
     opacity: 0;
   }
 
+  .fred__float {
+    transition: opacity var(--dur-fast) var(--ease-out);
+  }
+
   .fred-return {
     position: fixed;
     right: calc(var(--space-6) + env(safe-area-inset-right, 0px));
@@ -778,6 +1003,12 @@ const projects = (await getCollection('projects', ({ data }) => !data.placeholde
       animation: none !important;
       transition-duration: 0.01ms !important;
     }
+
+    .fred__text :global(.fred__w) {
+      opacity: 1;
+      filter: none;
+      transform: none;
+    }
   }
 </style>
 
@@ -792,7 +1023,7 @@ const projects = (await getCollection('projects', ({ data }) => !data.placeholde
   const nestFront = document.querySelector<HTMLElement>('[data-fred-nest="front"]');
   if (root && nestBack && nestFront) {
     let done = false;
-    // `nest` é o ninho 3D (com os ovos), ou null quando fica só o SVG
+    // `nest` é o ninho 3D, ou null quando fica só o SVG
     const ready = (nest: import('../../scripts/fred3d').Nest | null) => {
       if (done) return;
       done = true;

@@ -107,6 +107,7 @@ export function mountFred3D(root: HTMLElement) {
 
   // Poupa no topo da cabeça
   const crestMat = new THREE.MeshStandardMaterial({ color: BODY, roughness: 0.78 });
+  const crest: THREE.Group[] = [];
   [-0.45, 0, 0.45].forEach((rz, i) => {
     const g = new THREE.Group();
     g.position.set(0, 2.05, -0.02);
@@ -115,7 +116,12 @@ export function mountFred3D(root: HTMLElement) {
     tuft.position.y = 0.1;
     g.add(tuft);
     torso.add(g);
+    crest.push(g);
   });
+
+  // Adereço do projeto aberto (data-accessory, definido no Fred.astro)
+  const prop = addAccessory(root.dataset.accessory ?? '', torso);
+  if (prop?.hidesCrest) crest.forEach((g) => (g.visible = false));
 
   // Olhos
   const eyes = new THREE.Group();
@@ -312,6 +318,7 @@ export function mountFred3D(root: HTMLElement) {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
     time += dt;
+    prop?.update(time);
 
     const walking = has('is-walking');
     const back = has('is-back') && !walking;
@@ -689,4 +696,167 @@ export function mountNest(backEl: HTMLElement, frontEl: HTMLElement): Nest | nul
       draw();
     },
   };
+}
+
+// ---------- adereços dos projetos ----------
+// Um por case study, preso ao corpo do Fred (torso). A cabeça acaba em y≈2.1.
+interface Accessory {
+  hidesCrest: boolean;
+  update(time: number): void;
+}
+
+function addAccessory(kind: string, torso: THREE.Group): Accessory | null {
+  const mat = (color: number, extra: Partial<THREE.MeshStandardMaterialParameters> = {}) =>
+    new THREE.MeshStandardMaterial({ color, roughness: 0.6, ...extra });
+  const g = new THREE.Group();
+  torso.add(g);
+  const still = (hidesCrest = false): Accessory => ({ hidesCrest, update() {} });
+
+  if (kind === 'stars') {
+    // Find Your Constellation: três estrelas a orbitar a cabeça
+    const shape = new THREE.Shape();
+    for (let i = 0; i < 10; i++) {
+      const r = i % 2 ? 0.07 : 0.16;
+      const a = (i / 10) * Math.PI * 2 + Math.PI / 2;
+      if (i) shape.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+      else shape.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.05, bevelEnabled: true, bevelSize: 0.02, bevelThickness: 0.02, bevelSegments: 2 });
+    geo.center();
+    const gold = mat(0xf4d27a, { metalness: 0.6, roughness: 0.3, emissive: 0x5a4300 });
+    const ring = new THREE.Group();
+    ring.position.y = 2.2;
+    ring.rotation.x = 0.35;
+    g.add(ring);
+    const stars = [0, 1, 2].map((i) => {
+      const star = new THREE.Mesh(geo, gold);
+      const a = (i / 3) * Math.PI * 2;
+      star.position.set(Math.cos(a) * 0.62, 0, Math.sin(a) * 0.62);
+      star.scale.setScalar(i === 0 ? 1.1 : 0.8);
+      ring.add(star);
+      return star;
+    });
+    return {
+      hidesCrest: false,
+      update(time) {
+        ring.rotation.y = time * 0.6;
+        stars.forEach((star, i) => {
+          star.rotation.y = -ring.rotation.y; // ficam sempre de frente
+          star.position.y = Math.sin(time * 2 + i * 2) * 0.05;
+        });
+      },
+    };
+  }
+
+  if (kind === 'pin') {
+    // Pinnie: um pionés vermelho espetado na cabeça
+    const red = mat(0xe60023, { roughness: 0.35 });
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.16, 24, 16), red);
+    head.scale.set(1, 0.8, 1);
+    head.position.y = 0.36;
+    const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.13, 0.14, 20), red);
+    collar.position.y = 0.22;
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.12, 12), red);
+    neck.position.y = 0.11;
+    const needle = new THREE.Mesh(new THREE.ConeGeometry(0.018, 0.12, 10), mat(0xd7dbe3, { metalness: 0.9, roughness: 0.25 }));
+    needle.rotation.x = Math.PI;
+    needle.position.y = 0.02;
+    g.add(head, collar, neck, needle);
+    g.position.set(0.32, 1.95, 0.12);
+    g.rotation.set(0.15, 0, -0.45);
+    return still();
+  }
+
+  if (kind === 'collar') {
+    // PetSight: coleira com medalha
+    const band = new THREE.Mesh(new THREE.TorusGeometry(1, 0.075, 12, 64), mat(0x2f9e8f, { roughness: 0.5 }));
+    band.rotation.x = Math.PI / 2;
+    band.scale.set(0.79, 0.71, 1);
+    band.position.y = 1.08;
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.014, 8, 20), mat(0xd9c27a, { metalness: 0.8, roughness: 0.3 }));
+    ring.position.set(0, 1.0, 0.72);
+    const tag = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.025, 28), mat(0xf4d27a, { metalness: 0.8, roughness: 0.25 }));
+    tag.rotation.x = Math.PI / 2 - 0.2;
+    tag.position.set(0, 0.87, 0.74);
+    g.add(band, ring, tag);
+    return {
+      hidesCrest: false,
+      update(time) {
+        tag.rotation.z = Math.sin(time * 2.2) * 0.18;
+      },
+    };
+  }
+
+  if (kind === 'plant') {
+    // GlowAI: um vaso com uma planta, como se estivesse a decorar a sala
+    const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.15, 0.24, 28), mat(0xeae4da, { roughness: 0.7 }));
+    pot.position.y = 0.12;
+    const soil = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.02, 28), mat(0x4a3526, { roughness: 1 }));
+    soil.position.y = 0.235;
+    g.add(pot, soil);
+    const leafMat = mat(0x5f9e6e, { roughness: 0.55, side: THREE.DoubleSide });
+    const leaves = [
+      [0.3, 0.15, 0.42],
+      [1.9, 0.7, 0.34],
+      [3.5, 0.65, 0.36],
+      [5.0, 0.6, 0.3],
+      [2.7, 0.35, 0.38],
+    ].map(([a, tilt, len]) => {
+      const stem = new THREE.Group();
+      stem.position.y = 0.24;
+      stem.rotation.set(0, a, tilt);
+      const leaf = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 10), leafMat);
+      leaf.scale.set(0.11, len / 2, 0.03);
+      leaf.position.y = len / 2;
+      stem.add(leaf);
+      g.add(stem);
+      return stem;
+    });
+    g.position.set(0, 1.98, 0);
+    return {
+      hidesCrest: true,
+      update(time) {
+        leaves.forEach((stem, i) => (stem.rotation.x = Math.sin(time * 1.6 + i) * 0.08));
+      },
+    };
+  }
+
+  if (kind === 'cap') {
+    // FBAUL Alumni: capelo de finalista com borla
+    const navy = mat(0x1d2233, { roughness: 0.7 });
+    const skull = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.46, 0.2, 32), navy);
+    skull.position.y = 0.08;
+    const board = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.05, 1.0), navy);
+    board.position.y = 0.2;
+    board.rotation.y = Math.PI / 4;
+    const gold = mat(0xf4d27a, { metalness: 0.5, roughness: 0.4 });
+    const button = new THREE.Mesh(new THREE.SphereGeometry(0.045, 12, 8), gold);
+    button.position.y = 0.24;
+    const tassel = new THREE.Group();
+    tassel.position.set(0, 0.235, 0);
+    const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.5, 6), gold);
+    cord.rotation.z = Math.PI / 2;
+    cord.position.x = 0.25;
+    const hang = new THREE.Group();
+    hang.position.x = 0.5;
+    const string = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.28, 6), gold);
+    string.position.y = -0.14;
+    const tuft = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.06, 0.16, 10), gold);
+    tuft.position.y = -0.33;
+    hang.add(string, tuft);
+    tassel.add(cord, hang);
+    tassel.rotation.y = -0.5;
+    g.add(skull, board, button, tassel);
+    g.position.set(0, 1.98, -0.02);
+    g.rotation.set(-0.12, 0, 0.12);
+    return {
+      hidesCrest: true,
+      update(time) {
+        hang.rotation.z = Math.sin(time * 1.8) * 0.15;
+      },
+    };
+  }
+
+  torso.remove(g);
+  return null;
 }
