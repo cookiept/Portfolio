@@ -307,7 +307,7 @@ if (root && returnBtn) {
       say('Huh? Where am I?', 1800);
       await wait(1900);
       if (!reduced) flash('is-stretching', 1400);
-      say('Oh, hi! Good morning.', 2400);
+      say('I wasn’t sleeping, I promise.', 2600);
     },
   ];
 
