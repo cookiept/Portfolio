@@ -19,6 +19,8 @@ const projects = defineCollection({
       z.object({ type: z.literal('grid'), columns: z.union([z.literal(2), z.literal(3)]).default(2), images: z.array(shot), caption: z.string().optional(), note: z.string().optional() }),
       // Páginas compridas lado a lado (scroll horizontal no telemóvel)
       z.object({ type: z.literal('tall'), images: z.array(shot), caption: z.string().optional(), note: z.string().optional() }),
+      // Ecrãs de telemóvel lado a lado (scroll horizontal no telemóvel)
+      z.object({ type: z.literal('phones'), images: z.array(shot), caption: z.string().optional(), note: z.string().optional() }),
       // Passos numerados
       z.object({ type: z.literal('steps'), title: z.string(), steps: z.array(z.object({ title: z.string(), text: z.string() })) }),
       // Sistema visual: cores e tipos de letra

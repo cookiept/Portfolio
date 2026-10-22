@@ -6,6 +6,8 @@ import { Image } from 'astro:assets';
 import '@fontsource/inter/100.css';
 import '@fontsource/eb-garamond/400-italic.css';
 import '@fontsource/space-grotesk/300.css';
+import '@fontsource/quicksand/700.css';
+import '@fontsource/nunito/400.css';
 import BaseLayout from '@layouts/BaseLayout.astro';
 import Nav from '@components/ui/Nav.astro';
 import Footer from '@components/ui/Footer.astro';
@@ -99,6 +101,20 @@ const shotWidths = [600, 1000, 1512];
                       <div class="shot">
                         <Image src={s.src} alt={s.alt} widths={[400, 800, 1512]} quality={90} sizes="(max-width: 48rem) 75vw, 20rem" />
                         {s.label && <span class="shot__name">{s.label}</span>}
+                      </div>
+                    ))}
+                  </div>
+                  {b.caption && <figcaption>{b.caption}</figcaption>}
+                </figure>
+              );
+            if (b.type === 'phones')
+              return (
+                <figure class="b-phones" data-reveal data-fred-note={b.note}>
+                  <div class="b-phones__items" style={`--cols:${b.images.length}`}>
+                    {b.images.map((s) => (
+                      <div class="phone">
+                        <Image src={s.src} alt={s.alt} widths={[393, 786]} quality={92} sizes="(max-width: 48rem) 70vw, 16rem" />
+                        {s.label && <span class="phone__label">{s.label}</span>}
                       </div>
                     ))}
                   </div>
@@ -369,6 +385,47 @@ const shotWidths = [600, 1000, 1512];
     .b-tall__items {
       grid-auto-flow: row;
       grid-template-columns: repeat(4, 1fr);
+      overflow: visible;
+    }
+  }
+
+  /* Ecrãs de telemóvel: lado a lado, scroll horizontal no telemóvel */
+  .b-phones__items {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: min(70%, 16rem);
+    gap: var(--space-4);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: var(--space-2);
+  }
+
+  .phone {
+    display: grid;
+    gap: var(--space-3);
+    align-content: start;
+    scroll-snap-align: start;
+  }
+
+  .b-phones :global(img) {
+    border-radius: 1.75rem;
+  }
+
+  .b-phones figcaption {
+    margin-inline: auto;
+    text-align: center;
+  }
+
+  .phone__label {
+    color: var(--color-text-2);
+    font-size: var(--text-sm);
+  }
+
+  @media (min-width: 48rem) {
+    .b-phones__items {
+      grid-auto-flow: row;
+      grid-template-columns: repeat(var(--cols), minmax(0, 16rem));
+      justify-content: center;
       overflow: visible;
     }
   }
