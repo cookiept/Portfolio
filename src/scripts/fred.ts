@@ -1,8 +1,8 @@
 // Comportamento do Fred, a mascote do site.
 // Vive num ninho no canto inferior direito, sempre no mesmo sítio em todas
 // as páginas. Não passeia pela página (para não tapar os projetos): fica no
-// ninho, entretém-se com pequenas rotinas, segue o rato com os olhos e
-// encolhe-se quando um projeto passa por trás dele.
+// ninho, entretém-se com pequenas rotinas e segue o rato com os olhos.
+// Fica sempre fora do ninho, mesmo com conteúdo por trás (pedido do Gonçalo).
 // Clicar nele abre um balão com os contactos. Nos case studies, quando um
 // ecrã com nota ([data-fred-note]) aparece, conta a curiosidade.
 
@@ -149,23 +149,6 @@ if (root && returnBtn) {
   placeHome();
   window.addEventListener('resize', placeHome);
 
-  // Encolhe-se no ninho quando um projeto, uma imagem ou o formulário passa
-  // por trás dele, para nunca tapar o conteúdo.
-  const blockers = [...document.querySelectorAll<HTMLElement>('[data-fred], figure, form')];
-  let duckFrame = 0;
-  const checkDuck = () => {
-    duckFrame = 0;
-    const me = root.getBoundingClientRect();
-    const over = blockers.some((el) => {
-      const r = el.getBoundingClientRect();
-      return r.left < me.right && r.right > me.left && r.top < me.bottom && r.bottom > me.top + me.height * 0.3;
-    });
-    root.classList.toggle('is-ducking', over);
-  };
-  const queueDuck = () => {
-    if (!duckFrame) duckFrame = requestAnimationFrame(checkDuck);
-  };
-
   // ---------- rotinas automáticas (todas sem sair do ninho) ----------
   const routines: Record<string, () => Promise<void>> = {
     async look() {
@@ -182,8 +165,6 @@ if (root && returnBtn) {
       await wait(1800);
       root.classList.remove('is-ducking');
       flash('is-surprised', 700);
-      await wait(800);
-      queueDuck();
     },
     async stretch() {
       flash('is-stretching', 1600);
@@ -531,7 +512,6 @@ if (root && returnBtn) {
   window.addEventListener(
     'scroll',
     () => {
-      queueDuck();
       const y = window.scrollY;
       if (Math.abs(y - panelY) > 120) setPanel(false); // fecha ao fazer scroll
       const t = performance.now();
@@ -597,7 +577,6 @@ if (root && returnBtn) {
     () => {
       ready = true;
       placeHome();
-      checkDuck();
       idleTimer = window.setTimeout(fallAsleep, IDLE_MS);
       blinkLoop();
       window.setTimeout(runRoutine, 12000);
