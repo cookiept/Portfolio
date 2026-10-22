@@ -64,7 +64,7 @@ blocks:
   - type: phones
     images:
       - src: ../../assets/projects/petsight/phase-face.jpg
-        alt: Camera view for phase 1, facial features, with three tips
+        alt: Camera view for phase 1, framing Bingo's face, with three tips
         label: 1 · Face
       - src: ../../assets/projects/petsight/phase-walk.jpg
         alt: Camera view for phase 2, walking gait, framing the cat
