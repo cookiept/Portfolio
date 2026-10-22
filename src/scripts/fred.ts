@@ -153,15 +153,8 @@ if (root && returnBtn) {
   // por trás dele, para nunca tapar o conteúdo.
   const blockers = [...document.querySelectorAll<HTMLElement>('[data-fred], figure, form')];
   let duckFrame = 0;
-  // Em ecrãs estreitos as imagens ocupam a largura toda e estariam sempre
-  // por trás dele, por isso aí nunca se esconde no ninho.
-  const narrow = window.matchMedia('(max-width: 40rem)');
   const checkDuck = () => {
     duckFrame = 0;
-    if (narrow.matches) {
-      root.classList.remove('is-ducking');
-      return;
-    }
     const me = root.getBoundingClientRect();
     const over = blockers.some((el) => {
       const r = el.getBoundingClientRect();

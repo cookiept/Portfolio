@@ -1049,10 +1049,12 @@ const accessory = ACCESSORIES[slug] ?? '';
     }
   }
 
+  /* No telemóvel o Fred não aparece */
   @media (max-width: 40rem) {
     .fred,
-    .fred-nest {
-      --size: 4.25rem;
+    .fred-nest,
+    .fred-return {
+      display: none !important;
     }
   }
 
@@ -1072,7 +1074,9 @@ const accessory = ACCESSORIES[slug] ?? '';
 </style>
 
 <script>
-  import '../../scripts/fred';
+  // No telemóvel o Fred não aparece (decisão do Gonçalo): o CSS esconde-o
+  // e aqui nem se carrega o comportamento nem o 3D.
+  const phone = window.matchMedia('(max-width: 40rem)').matches;
 
   // O Fred e o ninho em 3D carregam logo a seguir à página. Até estarem
   // prontos não se vê nada; se não houver WebGL (ou demorar demasiado),
@@ -1080,7 +1084,8 @@ const accessory = ACCESSORIES[slug] ?? '';
   const root = document.querySelector<HTMLElement>('[data-fred-root]');
   const nestBack = document.querySelector<HTMLElement>('[data-fred-nest="back"]');
   const nestFront = document.querySelector<HTMLElement>('[data-fred-nest="front"]');
-  if (root && nestBack && nestFront) {
+  if (!phone && root && nestBack && nestFront) {
+    import('../../scripts/fred');
     let done = false;
     // `nest` é o ninho 3D, ou null quando fica só o SVG
     const ready = (nest: import('../../scripts/fred3d').Nest | null) => {
