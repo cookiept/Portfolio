@@ -336,6 +336,7 @@ export function mountFred3D(root: HTMLElement) {
     const preening = has('is-preening');
     const dancing = has('is-dancing');
     const shaking = has('is-shaking');
+    const lookingAround = has('is-looking-around');
 
     // Para onde está virado: de lado a andar, de costas a esconder-se,
     // ou a três quartos a olhar para o rato
@@ -344,6 +345,7 @@ export function mountFred3D(root: HTMLElement) {
     if (walking) yawT = left ? -Math.PI / 2 : Math.PI / 2;
     else if (back) yawT = Math.PI;
     else if (preening) yawT = -0.85; // vira-se para a asa esquerda
+    else if (lookingAround) yawT = Math.sin(time * 4.5) * 0.9; // baralhado, olha para os lados
     else yawT = (left ? -0.3 : 0.3) * 0.6 + lx * 0.45;
     // a cabecear com sono, ou de cabeça em baixo a dormir
     const nod = drowsy ? Math.max(0, Math.sin(time * 1.4)) ** 6 * 0.3 : 0;

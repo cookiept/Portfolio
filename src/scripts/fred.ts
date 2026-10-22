@@ -247,7 +247,7 @@ if (root && returnBtn) {
 
   // ---------- adormecer / acordar ----------
   // Se ninguém lhe tocar (clicar ou passar o rato perto), boceja, cabeceia
-  // e adormece, com bolhinhas "z" a subir. Acorda quando lhe tocam.
+  // e adormece, com bolhinhas "z" a subir. A dormir, só acorda com um clique.
   const snore = () => {
     if (!sleeping) return;
     puff('z');
@@ -272,21 +272,51 @@ if (root && returnBtn) {
     window.setTimeout(snore, 900);
   };
 
-  const wakeUp = () => {
+  // Atividade perto dele: adia o sono e espanta a sonolência,
+  // mas não o acorda se já estiver a dormir
+  const poke = () => {
     window.clearTimeout(idleTimer);
     idleTimer = window.setTimeout(fallAsleep, IDLE_MS);
-    if (drowsy) {
-      drowsy = false;
-      root.classList.remove('is-drowsy');
-      flash('is-surprised', 600);
-      return;
-    }
+    if (!drowsy) return;
+    drowsy = false;
+    root.classList.remove('is-drowsy');
+    flash('is-surprised', 600);
+  };
+
+  // Três maneiras de acordar, ao calhas
+  const wakings = [
+    // assusta-se e dá um salto
+    () => {
+      if (!reduced) {
+        flash('is-shaking', 400);
+        flash('is-jumping', 700);
+      }
+      flash('is-surprised', 1200);
+      say(pick(['Ah! You scared me!', 'Whoa! I’m up, I’m up!']), 2600);
+    },
+    // boceja, envergonhado
+    async () => {
+      if (!reduced) flash('is-yawning', 1300);
+      await wait(1100);
+      flash('is-surprised', 700);
+      say('Was I snoring?', 2600);
+    },
+    // acorda baralhado, olha à volta e espreguiça-se
+    async () => {
+      if (!reduced) flash('is-looking-around', 1800);
+      say('Huh? Where am I?', 1800);
+      await wait(1900);
+      if (!reduced) flash('is-stretching', 1400);
+      say('Oh, hi! Good morning.', 2400);
+    },
+  ];
+
+  const wakeUp = () => {
+    poke();
     if (!sleeping) return;
     sleeping = false;
     root.classList.remove('is-sitting', 'is-sleeping');
-    if (!reduced) flash('is-shaking', 600);
-    flash('is-surprised', 900);
-    say(pick(['Oh! I’m awake, I promise.', 'Was I snoring?', 'Five more minutes…', 'Huh? I was just resting my eyes.']), 2600);
+    pick(wakings)();
   };
 
   // ---------- piscar ----------
@@ -330,14 +360,14 @@ if (root && returnBtn) {
     const tryNote = (el: HTMLElement) => {
       if (!visible.has(el)) return;
       const now = Date.now();
-      if (!ready || isHidden() || bubble.classList.contains('is-visible') || now - lastNote < NOTE_GAP_MS) {
+      if (!ready || sleeping || isHidden() || bubble.classList.contains('is-visible') || now - lastNote < NOTE_GAP_MS) {
         window.setTimeout(() => tryNote(el), 1500);
         return;
       }
       noteObserver.unobserve(el);
       visible.delete(el);
       lastNote = lastTease = now;
-      wakeUp();
+      poke();
       root.classList.remove('is-ducking');
       if (!reduced) flash('is-hopping', 600);
       say(el.dataset.fredNote ?? '', 5200);
@@ -401,8 +431,8 @@ if (root && returnBtn) {
     (e) => {
       const r = btn.getBoundingClientRect();
       const dist = Math.hypot(e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2));
-      // só acorda se o rato chegar perto dele
-      if (dist < NEAR_PX) wakeUp();
+      // o rato perto adia o sono (a dormir, só um clique o acorda)
+      if (dist < NEAR_PX) poke();
       if (sleeping || drowsy) return;
       lookAt(e.clientX, e.clientY);
 
@@ -429,7 +459,7 @@ if (root && returnBtn) {
       return;
     }
     if (hiddenAt && Date.now() - hiddenAt > 8000) {
-      wakeUp();
+      poke();
       tease('You’re back!', 2400, 'is-waving');
     }
   });
@@ -521,8 +551,8 @@ if (root && returnBtn) {
 
   // Festeja quando a mensagem do formulário é enviada
   window.addEventListener('contact:sent', () => {
-    if (isHidden()) return;
-    wakeUp();
+    if (isHidden() || sleeping) return;
+    poke();
     if (!reduced) flash('is-jumping', 700);
     say('Yay! Message sent. Gonçalo will reply soon.', 3800);
     lastTease = Date.now();
