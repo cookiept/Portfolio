@@ -154,15 +154,12 @@ if (root && returnBtn) {
   const blockers = [...document.querySelectorAll<HTMLElement>('[data-fred], figure, form')];
   let duckFrame = 0;
   // Em ecrãs estreitos as imagens ocupam a largura toda e estariam sempre
-  // por trás dele, por isso aí só se esconde enquanto há scroll e volta
-  // a espreitar quando a página pára.
+  // por trás dele, por isso aí nunca se esconde no ninho.
   const narrow = window.matchMedia('(max-width: 40rem)');
-  let lastScrollAt = 0;
-  let peekTimer = 0;
   const checkDuck = () => {
     duckFrame = 0;
     if (narrow.matches) {
-      root.classList.toggle('is-ducking', performance.now() - lastScrollAt < 600);
+      root.classList.remove('is-ducking');
       return;
     }
     const me = root.getBoundingClientRect();
@@ -541,9 +538,6 @@ if (root && returnBtn) {
   window.addEventListener(
     'scroll',
     () => {
-      lastScrollAt = performance.now();
-      window.clearTimeout(peekTimer);
-      peekTimer = window.setTimeout(queueDuck, 650);
       queueDuck();
       const y = window.scrollY;
       if (Math.abs(y - panelY) > 120) setPanel(false); // fecha ao fazer scroll
