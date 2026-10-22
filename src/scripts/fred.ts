@@ -38,6 +38,30 @@ if (root && returnBtn) {
   let lastDodge = 0;
 
   const isHidden = () => root.classList.contains('is-hidden');
+
+  // ---------- memória ----------
+  // localStorage lembra-se de quem já o conheceu (entre visitas);
+  // sessionStorage guarda o que já aconteceu nesta visita, de página
+  // para página: se já se apresentou, se está a dormir, se já disse adeus.
+  const MEMORY = { met: 'fred-met', greeted: 'fred-greeted', asleep: 'fred-asleep', leaving: 'fred-said-leaving' };
+  const recall = (store: Storage | undefined, key: string) => {
+    try {
+      return store?.getItem(key) ?? null;
+    } catch {
+      return null;
+    }
+  };
+  const remember = (store: Storage | undefined, key: string, value: string | null) => {
+    try {
+      if (value === null) store?.removeItem(key);
+      else store?.setItem(key, value);
+    } catch {
+      /* sem armazenamento: esquece-se, não faz mal */
+    }
+  };
+  const local = (() => { try { return window.localStorage; } catch { return undefined; } })();
+  const session = (() => { try { return window.sessionStorage; } catch { return undefined; } })();
+  saidLeaving = recall(session, MEMORY.leaving) === '1';
   const wait = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
   const pick = <T,>(list: T[]) => list[Math.floor(Math.random() * list.length)];
 
@@ -266,7 +290,12 @@ if (root && returnBtn) {
     if (!drowsy) return; // tocaram-lhe entretanto
     drowsy = false;
     root.classList.remove('is-drowsy');
+    goToSleep();
+  };
+
+  const goToSleep = () => {
     sleeping = true;
+    remember(session, MEMORY.asleep, '1');
     root.classList.add('is-sitting', 'is-sleeping');
     setEyes(0, 0);
     window.setTimeout(snore, 900);
@@ -315,6 +344,7 @@ if (root && returnBtn) {
     poke();
     if (!sleeping) return;
     sleeping = false;
+    remember(session, MEMORY.asleep, null);
     root.classList.remove('is-sitting', 'is-sleeping');
     pick(wakings)();
   };
@@ -449,7 +479,10 @@ if (root && returnBtn) {
   // ---------- sair da página e voltar ----------
   document.addEventListener('mouseout', (e) => {
     if (e.relatedTarget || e.clientY > 0 || saidLeaving) return;
-    if (tease('Leaving already?')) saidLeaving = true;
+    if (tease('Leaving already?')) {
+      saidLeaving = true;
+      remember(session, MEMORY.leaving, '1');
+    }
   });
 
   let hiddenAt = 0;
@@ -569,8 +602,20 @@ if (root && returnBtn) {
       blinkLoop();
       window.setTimeout(runRoutine, 12000);
       if (isHidden()) return;
+      // Continua a dormir se adormeceu na página anterior
+      if (recall(session, MEMORY.asleep) === '1') {
+        window.clearTimeout(idleTimer);
+        goToSleep();
+        return;
+      }
+      // Apresenta-se uma vez por visita: na primeira de sempre diz o nome,
+      // nas seguintes dá as boas-vindas. Ao mudar de página fica calado.
+      if (recall(session, MEMORY.greeted) === '1') return;
+      remember(session, MEMORY.greeted, '1');
+      const metBefore = recall(local, MEMORY.met) === '1';
+      remember(local, MEMORY.met, '1');
       if (!reduced) flash('is-waving', 2000);
-      say('Hi! I’m Fred.', 3000);
+      say(metBefore ? pick(['Welcome back!', 'Oh, you again! Hi!', 'Hey, good to see you again.']) : 'Hi! I’m Fred.', 3000);
       lastTease = Date.now();
     },
     { once: true },
