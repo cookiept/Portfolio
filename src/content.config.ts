@@ -52,6 +52,14 @@ const projects = defineCollection({
           }),
         ),
         result: z.object({ title: z.string(), text: z.string(), image: shot, mockup: image().optional() }),
+        bridge: z.string().optional(),
+        note: z.string().optional(),
+      }),
+      // Um iPhone com cartões de funcionalidades ao lado
+      z.object({
+        type: z.literal('features'),
+        phone: z.object({ src: image(), alt: z.string() }),
+        items: z.array(z.object({ icon: z.enum(['calendar', 'syringe', 'share']), title: z.string(), text: z.string() })),
         note: z.string().optional(),
       }),
       // Passos numerados

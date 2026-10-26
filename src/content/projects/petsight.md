@@ -157,16 +157,26 @@ blocks:
         src: ../../assets/projects/petsight/paw-report.jpg
         alt: Health summary with erythema intensity, edema estimation and surface integrity
       mockup: ../../assets/projects/petsight/hand/phone-paw-report.webp
+    bridge: Two minutes later
   - type: text
     eyebrow: Beyond one scan
     title: Health that adds up over time
     body:
       - Every check-up joins the pet's history. Owners can search past reports by date, keep upcoming events like vaccines in one place, and link the profile to their vet and family.
-  - type: phones
-    images:
-      - src: ../../assets/projects/petsight/calendar.jpg
-        alt: Health assessments calendar to search reports by date range
-        label: Search by date
+  - type: features
+    phone:
+      src: ../../assets/projects/petsight/hand/phone-calendar.webp
+      alt: Health assessments calendar to search reports by date range
+    items:
+      - icon: calendar
+        title: Search by date
+        text: Pick a range on the calendar and get one report for that period.
+      - icon: syringe
+        title: Vaccines and events
+        text: Upcoming vaccines and vet visits live next to the check-ups.
+      - icon: share
+        title: Shared with the vet
+        text: Link the profile to the vet and family, so everyone sees the same history.
     note: Every check-up is saved, so the vet sees the whole story.
   - type: text
     eyebrow: What I learned

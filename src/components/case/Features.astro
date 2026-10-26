@@ -1,0 +1,132 @@
+---
+// Um iPhone (foto do mockup com o ecrã já colado) e, ao lado, cartões
+// curtos com o que a funcionalidade permite. Os cartões entram um a um.
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+interface Props {
+  phone: { src: ImageMetadata; alt: string };
+  items: { icon: 'calendar' | 'syringe' | 'share'; title: string; text: string }[];
+  note?: string;
+}
+const { phone, items, note } = Astro.props;
+
+const icons = {
+  calendar: '<rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+  syringe: '<path d="m17 3 4 4M19 5l-4.5 4.5M14 6l4 4M15.5 8.5 8 16H5v-3l7.5-7.5M3 21l2-2M9 10l2 2M11.5 7.5l2 2"/>',
+  share: '<circle cx="18" cy="5.5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="18.5" r="2.5"/><path d="m8.2 10.8 7.6-4M8.2 13.2l7.6 4"/>',
+};
+---
+
+<figure class="features" data-reveal data-fred-note={note}>
+  <div class="features__phone">
+    <Image src={phone.src} alt={phone.alt} widths={[400, 583]} quality={95} sizes="(min-width: 56rem) 17rem, 60vw" />
+  </div>
+  <ul class="features__items">
+    {
+      items.map((it, i) => (
+        <li class="features__item" style={`--i:${i}`}>
+          <span class="features__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" set:html={icons[it.icon]} />
+          </span>
+          <div>
+            <h3>{it.title}</h3>
+            <p>{it.text}</p>
+          </div>
+        </li>
+      ))
+    }
+  </ul>
+</figure>
+
+<style>
+  .features {
+    margin: 0;
+    display: grid;
+    gap: var(--space-8);
+    align-items: center;
+  }
+
+  .features__phone {
+    width: min(70%, 15rem);
+    justify-self: center;
+  }
+
+  .features__phone :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 0;
+    border-radius: 0;
+    filter: drop-shadow(0 2rem 2.5rem rgb(0 0 0 / 0.55));
+  }
+
+  .features__items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .features__item {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-4);
+    align-items: start;
+    padding: var(--space-6);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-card);
+    background: var(--color-surface, rgb(255 255 255 / 0.03));
+  }
+
+  .features__icon {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    aspect-ratio: 1;
+    border-radius: 12px;
+    background: #dcedf8;
+  }
+
+  .features__icon svg {
+    width: 1.35rem;
+    fill: none;
+    stroke: #2e7eb3;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .features__item h3 {
+    font-size: var(--text-lg);
+  }
+
+  .features__item p {
+    margin-top: var(--space-1);
+    color: var(--color-text-2);
+  }
+
+  @media (min-width: 56rem) {
+    .features {
+      grid-template-columns: minmax(0, 17rem) minmax(0, 28rem);
+      justify-content: center;
+      column-gap: var(--space-16);
+    }
+
+    .features__phone {
+      width: 100%;
+    }
+
+    :global(.js) .features[data-reveal] .features__item {
+      transition:
+        opacity 0.6s ease calc(0.2s + var(--i) * 0.12s),
+        translate 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) calc(0.2s + var(--i) * 0.12s);
+    }
+
+    :global(.js) .features[data-reveal].is-waiting .features__item {
+      opacity: 0;
+      translate: 1.5rem 0;
+    }
+  }
+</style>

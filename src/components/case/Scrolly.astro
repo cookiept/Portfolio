@@ -35,11 +35,15 @@ const chapters = [...new Set(steps.map((s) => s.chapter).filter(Boolean))] as st
 
   <div class="scrolly__body">
     <ol class="scrolly__steps">
+      <span class="scrolly__rail" aria-hidden="true"><span></span></span>
       {
         steps.map((s, i) => (
           <li class:list={['scrolly__step', { 'is-active': i === 0 }]} data-step={i} data-fred-note={s.note}>
             {s.chapter && <p class="scrolly__chapter">{s.chapter}</p>}
-            <h3>{s.title}</h3>
+            <h3>
+              <span class="scrolly__dot" aria-hidden="true" />
+              {s.title}
+            </h3>
             <p>{s.text}</p>
             <div class="scrolly__inline">
               <PhoneFrame>
@@ -114,11 +118,30 @@ const chapters = [...new Set(steps.map((s) => s.chapter).filter(Boolean))] as st
     const screens = [...root.querySelectorAll<HTMLElement>('.scrolly__screen')];
     const chapters = [...root.querySelectorAll<HTMLElement>('[data-chapter]')];
     const bar = root.querySelector<HTMLElement>('.scrolly__progress span');
+    const list = root.querySelector<HTMLElement>('.scrolly__steps')!;
+    const dots = [...root.querySelectorAll<HTMLElement>('.scrolly__dot')];
     let current = 0;
+
+    // A linha da timeline vai do primeiro ao último ponto e enche até ao passo ativo
+    const dotY = (k: number) => {
+      const d = dots[k].getBoundingClientRect();
+      return d.top + d.height / 2 - list.getBoundingClientRect().top;
+    };
+    const layout = () => {
+      if (!dots.length) return;
+      list.style.setProperty('--rail-top', `${dotY(0)}px`);
+      list.style.setProperty('--rail-end', `${dotY(dots.length - 1)}px`);
+      list.style.setProperty('--rail-fill', `${dotY(current) - dotY(0)}px`);
+    };
+    new ResizeObserver(layout).observe(list);
 
     const show = (i: number) => {
       current = i;
-      steps.forEach((el, k) => el.classList.toggle('is-active', k === i));
+      steps.forEach((el, k) => {
+        el.classList.toggle('is-active', k === i);
+        el.classList.toggle('is-done', k < i);
+      });
+      layout();
       screens.forEach((el, k) => {
         el.classList.toggle('is-active', k === i);
         el.classList.toggle('is-before', k < i);
@@ -164,11 +187,65 @@ const chapters = [...new Set(steps.map((s) => s.chapter).filter(Boolean))] as st
   }
 
   .scrolly__steps {
+    position: relative;
     list-style: none;
     margin: 0;
-    padding: 0;
+    padding: 0 0 0 var(--space-12);
     display: grid;
     gap: var(--space-16);
+  }
+
+  /* Timeline: linha à esquerda dos passos, com um ponto em cada título */
+  .scrolly__rail {
+    position: absolute;
+    left: calc(0.6875rem - 1px);
+    top: var(--rail-top, 0);
+    height: calc(var(--rail-end, 100%) - var(--rail-top, 0px));
+    width: 2px;
+    border-radius: 2px;
+    background: var(--color-line-strong);
+  }
+
+  .scrolly__rail span {
+    display: block;
+    width: 100%;
+    height: var(--rail-fill, 0);
+    border-radius: inherit;
+    background: var(--color-accent);
+    transition: height 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .scrolly__step h3 {
+    position: relative;
+  }
+
+  .scrolly__dot {
+    position: absolute;
+    left: calc(-1 * var(--space-12) + 0.25rem);
+    top: 50%;
+    width: 0.875rem;
+    aspect-ratio: 1;
+    translate: 0 -50%;
+    border-radius: 50%;
+    background: var(--color-bg);
+    box-shadow: inset 0 0 0 2px var(--color-line-strong);
+    transition:
+      background 0.4s,
+      box-shadow 0.4s,
+      scale 0.4s;
+  }
+
+  .is-done .scrolly__dot {
+    background: var(--color-accent);
+    box-shadow: inset 0 0 0 2px var(--color-accent);
+  }
+
+  .is-active .scrolly__dot {
+    background: var(--color-bg);
+    box-shadow:
+      inset 0 0 0 3px var(--color-accent),
+      0 0 0 6px color-mix(in srgb, var(--color-accent) 22%, transparent);
+    scale: 1.25;
   }
 
   .scrolly__step {
@@ -331,7 +408,9 @@ const chapters = [...new Set(steps.map((s) => s.chapter).filter(Boolean))] as st
 
   @media (prefers-reduced-motion: reduce) {
     .scrolly__screen,
-    .scrolly__step {
+    .scrolly__step,
+    .scrolly__rail span,
+    .scrolly__dot {
       transition: none;
     }
   }

@@ -18,9 +18,11 @@ interface Props {
   steps: Step[];
   // mockup: foto de um iPhone real com o ecrã já colado (opcional)
   result: { title: string; text: string; image: { src: ImageMetadata; alt: string }; mockup?: ImageMetadata };
+  // frase curta na linha que liga os passos ao resultado
+  bridge?: string;
   note?: string;
 }
-const { steps, result, note } = Astro.props;
+const { steps, result, bridge, note } = Astro.props;
 ---
 
 <figure class="story" data-reveal data-fred-note={note}>
@@ -62,6 +64,10 @@ const { steps, result, note } = Astro.props;
     }
   </ol>
 
+  <div class="story__bridge" aria-hidden={bridge ? undefined : 'true'}>
+    {bridge && <span>{bridge}</span>}
+  </div>
+
   <div class="story__result">
     <div class="story__phone">
       {
@@ -86,7 +92,7 @@ const { steps, result, note } = Astro.props;
   .story {
     margin: 0;
     display: grid;
-    gap: var(--space-16);
+    gap: 0;
     --s-navy: #1a3f55;
     --s-ocean: #2e7eb3;
   }
@@ -238,15 +244,55 @@ const { steps, result, note } = Astro.props;
     color: #6b7c88;
   }
 
-  /* Resultado: iPhone com o relatório da pata */
+  /* Ligação: a linha tracejada desce dos passos até ao resultado */
+  .story__bridge {
+    display: grid;
+    justify-items: center;
+    padding-block: var(--space-6);
+  }
+
+  .story__bridge::before,
+  .story__bridge::after {
+    content: '';
+    height: var(--space-12);
+    border-left: 1px dashed var(--color-line-strong);
+  }
+
+  .story__bridge span {
+    padding: var(--space-2) var(--space-4);
+    border: 1px solid var(--color-line);
+    border-radius: 999px;
+    font-size: var(--text-sm);
+    color: var(--color-accent);
+  }
+
+  /* Resultado: iPhone com o relatório da pata, num painel com as cores do projeto */
   .story__result {
     display: grid;
     gap: var(--space-8);
     align-items: center;
+    padding: var(--space-8) var(--space-6);
+    border-radius: var(--radius-card);
+    background: radial-gradient(120% 90% at 30% 0%, #f7fcff 0%, #dcedf8 55%, #aad2ec 100%);
+    color: var(--s-navy);
+  }
+
+  .story__result .story__num {
+    background: none;
+    color: var(--s-ocean);
+  }
+
+  .story__result h3 {
+    color: var(--s-navy);
+  }
+
+  .story__result p {
+    color: #4a6577;
   }
 
   .story__phone {
-    width: min(60%, 15rem);
+    width: min(70%, 15rem);
+    justify-self: center;
   }
 
   .story__phone :global(.story__mockup) {
@@ -255,7 +301,7 @@ const { steps, result, note } = Astro.props;
     height: auto;
     border: 0;
     border-radius: 0;
-    filter: drop-shadow(0 2rem 2.5rem rgb(0 0 0 / 0.55));
+    filter: drop-shadow(0 1.5rem 2rem rgb(26 63 85 / 0.35));
   }
 
   .story__result-text {
@@ -279,7 +325,7 @@ const { steps, result, note } = Astro.props;
       grid-template-columns: minmax(0, 18rem) minmax(0, 1fr);
       column-gap: var(--space-16);
       justify-content: center;
-      padding-inline: 10%;
+      padding: var(--space-12) 10%;
     }
 
     .story__phone {
