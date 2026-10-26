@@ -1,0 +1,285 @@
+---
+// Um caso contado como tira: cada passo é um cartão com o essencial do
+// ecrã (chips, recorte, escala), ligados por uma linha, e no fim o
+// resultado num iPhone. No telemóvel os cartões fazem scroll horizontal.
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import PhoneFrame from './PhoneFrame.astro';
+
+interface Step {
+  title: string;
+  text: string;
+  chips?: string[];
+  quote?: string;
+  image?: { src: ImageMetadata; alt: string };
+  scale?: { value: number; max: number; low: string; high: string };
+}
+interface Props {
+  steps: Step[];
+  result: { title: string; text: string; image: { src: ImageMetadata; alt: string } };
+  note?: string;
+}
+const { steps, result, note } = Astro.props;
+---
+
+<figure class="story" data-reveal data-fred-note={note}>
+  <ol class="story__steps" style={`--n:${steps.length}`}>
+    {
+      steps.map((s, i) => (
+        <li class="story__step" style={`--i:${i}`}>
+          <div class="story__visual">
+            {s.chips && (
+              <div class="story__chips">
+                <div class="story__chip-row">
+                  {s.chips.map((c, k) => (
+                    <span class:list={['story__chip', { 'is-on': k === s.chips!.length - 1 }]}>{c}</span>
+                  ))}
+                </div>
+                {s.quote && <p class="story__quote">“{s.quote}”</p>}
+              </div>
+            )}
+            {s.image && <Image src={s.image.src} alt={s.image.alt} widths={[360, 720]} quality={92} sizes="18rem" />}
+            {s.scale && (
+              <div class="story__scale" role="img" aria-label={`Discomfort ${s.scale.value} of ${s.scale.max}`}>
+                <div class="story__scale-row">
+                  {Array.from({ length: s.scale.max }, (_, k) => (
+                    <span class:list={{ 'is-on': k + 1 === s.scale!.value }}>{k + 1}</span>
+                  ))}
+                </div>
+                <div class="story__scale-ends">
+                  <span>{s.scale.low}</span>
+                  <span>{s.scale.high}</span>
+                </div>
+              </div>
+            )}
+          </div>
+          <span class="story__num">0{i + 1}</span>
+          <h3>{s.title}</h3>
+          <p>{s.text}</p>
+        </li>
+      ))
+    }
+  </ol>
+
+  <div class="story__result">
+    <div class="story__phone">
+      <PhoneFrame>
+        <Image src={result.image.src} alt={result.image.alt} widths={[393, 786]} quality={92} sizes="16rem" />
+      </PhoneFrame>
+    </div>
+    <div class="story__result-text">
+      <span class="story__num">→</span>
+      <h3>{result.title}</h3>
+      <p>{result.text}</p>
+    </div>
+  </div>
+</figure>
+
+<style>
+  .story {
+    margin: 0;
+    display: grid;
+    gap: var(--space-16);
+    --s-navy: #1a3f55;
+    --s-ocean: #2e7eb3;
+  }
+
+  .story__steps {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 var(--space-2);
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: min(78%, 18rem);
+    gap: var(--space-4);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+  }
+
+  .story__step {
+    position: relative;
+    display: grid;
+    gap: var(--space-2);
+    align-content: start;
+    scroll-snap-align: start;
+  }
+
+  /* linha que liga os passos, à altura do número */
+  .story__step::after {
+    content: '';
+    position: absolute;
+    top: calc(13rem + var(--space-4) + 0.6em);
+    left: 2.25rem;
+    right: calc(-1 * var(--space-4));
+    border-top: 1px dashed var(--color-line-strong);
+  }
+
+  .story__step:last-child::after {
+    right: 0;
+  }
+
+  .story__visual {
+    height: 13rem;
+    margin-bottom: var(--space-4);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: var(--radius-media);
+    background: #f5f5f5;
+    font-family: 'Nunito', system-ui, sans-serif;
+    color: var(--s-navy);
+  }
+
+  .story__visual :global(img) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .story__num {
+    position: relative;
+    z-index: 1;
+    justify-self: start;
+    padding-right: var(--space-3);
+    background: var(--color-bg);
+    font-size: var(--text-sm);
+    color: var(--color-accent);
+  }
+
+  .story__step h3,
+  .story__result h3 {
+    font-size: var(--text-title);
+  }
+
+  .story__step p,
+  .story__result p {
+    color: var(--color-text-2);
+  }
+
+  /* Chips de sintomas + a frase do dono */
+  .story__chips {
+    display: grid;
+    gap: var(--space-3);
+    padding: var(--space-4);
+  }
+
+  .story__chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .story__chip {
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    background: #e3e7ea;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .story__chip.is-on {
+    background: #fff;
+    box-shadow: inset 0 0 0 1.5px var(--s-navy);
+  }
+
+  .story__quote {
+    padding: var(--space-3);
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: inset 0 0 0 1px #c9d2d8;
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+
+  /* Escala de desconforto */
+  .story__scale {
+    width: 100%;
+    padding: var(--space-4);
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .story__scale-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.4rem;
+  }
+
+  .story__scale-row span {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 1;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: inset 0 0 0 1px #d6dde2;
+    font-size: 1.1rem;
+  }
+
+  .story__scale-row span.is-on {
+    background: #e6f3fc;
+    box-shadow: inset 0 0 0 1.5px var(--s-ocean);
+    scale: 1.08;
+  }
+
+  .story__scale-ends {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: #6b7c88;
+  }
+
+  /* Resultado: iPhone com o relatório da pata */
+  .story__result {
+    display: grid;
+    gap: var(--space-8);
+    align-items: center;
+  }
+
+  .story__phone {
+    width: min(60%, 15rem);
+  }
+
+  .story__result-text {
+    display: grid;
+    gap: var(--space-2);
+    max-width: 40ch;
+  }
+
+  .story__result-text p {
+    font-size: var(--text-lg);
+  }
+
+  @media (min-width: 56rem) {
+    .story__steps {
+      grid-auto-flow: row;
+      grid-template-columns: repeat(var(--n, 4), 1fr);
+      overflow: visible;
+    }
+
+    .story__result {
+      grid-template-columns: minmax(0, 16rem) minmax(0, 1fr);
+      column-gap: var(--space-16);
+      justify-content: center;
+      padding-inline: 10%;
+    }
+
+    .story__phone {
+      width: 100%;
+    }
+
+    /* os passos entram um a um */
+    :global(.js) .story[data-reveal] .story__step {
+      transition:
+        opacity 0.6s ease calc(var(--i) * 0.12s),
+        translate 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) calc(var(--i) * 0.12s);
+    }
+
+    :global(.js) .story[data-reveal].is-waiting .story__step {
+      opacity: 0;
+      translate: 0 1.5rem;
+    }
+  }
+</style>

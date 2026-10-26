@@ -21,7 +21,7 @@ body {
   color: var(--color-text);
   background: var(--color-bg);
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
+  overflow-x: clip; /* clip (e não hidden) para o position: sticky funcionar */
 }
 
 img,

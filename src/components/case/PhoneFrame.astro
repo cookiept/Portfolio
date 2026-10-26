@@ -1,0 +1,97 @@
+---
+// Moldura de iPhone em CSS (aro de titânio, ecrã com cantos redondos e
+// Dynamic Island). O ecrã vai no slot e enche o espaço 393x852.
+interface Props {
+  class?: string;
+}
+const { class: className } = Astro.props;
+---
+
+<div class:list={['iphone', className]}>
+  <span class="iphone__btn iphone__btn--action" aria-hidden="true"></span>
+  <span class="iphone__btn iphone__btn--up" aria-hidden="true"></span>
+  <span class="iphone__btn iphone__btn--down" aria-hidden="true"></span>
+  <span class="iphone__btn iphone__btn--power" aria-hidden="true"></span>
+  <div class="iphone__screen">
+    <slot />
+    <span class="iphone__island" aria-hidden="true"></span>
+  </div>
+</div>
+
+<style>
+  .iphone {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 433 / 892;
+    padding: 4.6%;
+    border-radius: 15% / 7.2%;
+    background:
+      linear-gradient(145deg, #5d6470 0%, #2a2e36 18%, #1a1d23 50%, #2a2e36 82%, #6a717d 100%);
+    box-shadow:
+      inset 0 0 0 1.5px rgb(255 255 255 / 0.18),
+      inset 0 0 0 4px #0b0c0f,
+      0 2.5rem 4rem -1.5rem rgb(0 0 0 / 0.65),
+      0 0.75rem 1.5rem -0.75rem rgb(0 0 0 / 0.5);
+  }
+
+  .iphone__screen {
+    position: relative;
+    height: 100%;
+    overflow: hidden;
+    border-radius: 12.5% / 5.8%;
+    background: #f7fcff;
+    isolation: isolate;
+  }
+
+  .iphone__screen :global(img) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .iphone__island {
+    position: absolute;
+    z-index: 2;
+    top: 1.6%;
+    left: 50%;
+    width: 31%;
+    height: 3.6%;
+    translate: -50% 0;
+    border-radius: 999px;
+    background: #000;
+  }
+
+  .iphone__btn {
+    position: absolute;
+    width: 0.9%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #5d6470, #2a2e36);
+  }
+
+  .iphone__btn--action {
+    left: -0.6%;
+    top: 18%;
+    height: 3.5%;
+  }
+
+  .iphone__btn--up {
+    left: -0.6%;
+    top: 25%;
+    height: 7%;
+  }
+
+  .iphone__btn--down {
+    left: -0.6%;
+    top: 34%;
+    height: 7%;
+  }
+
+  .iphone__btn--power {
+    right: -0.6%;
+    top: 28%;
+    height: 11%;
+  }
+</style>

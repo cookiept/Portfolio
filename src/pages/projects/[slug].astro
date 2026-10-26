@@ -11,6 +11,9 @@ import '@fontsource/nunito/400.css';
 import BaseLayout from '@layouts/BaseLayout.astro';
 import Nav from '@components/ui/Nav.astro';
 import Footer from '@components/ui/Footer.astro';
+import Scrolly from '@components/case/Scrolly.astro';
+import Report from '@components/case/Report.astro';
+import Story from '@components/case/Story.astro';
 import { site } from '@data/site';
 import { withBase } from '../../utils/url';
 
@@ -121,6 +124,9 @@ const shotWidths = [600, 1000, 1512];
                   {b.caption && <figcaption>{b.caption}</figcaption>}
                 </figure>
               );
+            if (b.type === 'scrolly') return <Scrolly eyebrow={b.eyebrow} title={b.title} lede={b.lede} steps={b.steps} />;
+            if (b.type === 'report') return <Report phone={b.phone} scores={b.scores} actions={b.actions} caption={b.caption} note={b.note} />;
+            if (b.type === 'story') return <Story steps={b.steps} result={b.result} note={b.note} />;
             if (b.type === 'steps')
               return (
                 <section class="b-steps" data-reveal data-fred-section={b.title}>

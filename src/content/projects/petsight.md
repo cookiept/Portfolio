@@ -38,96 +38,116 @@ blocks:
         alt: Bingo's pet health page with weight, age, illness and previous assessments
         label: Pet health
     caption: Home shows how the pet is doing at a glance, with one health score and three simple rings.
-  - type: steps
-    title: How it works
+  - type: scrolly
+    eyebrow: How it works
+    title: From setup to report, in one flow
+    lede: A short setup, three filmed phases and a quick review. Every screen has one clear next step.
     steps:
-      - title: Set up you and your pet
-        text: Owner and pet profiles, with breed, age, sex and weight.
-      - title: Say what you notice
-        text: Pick symptoms like limping or lethargy, or run a routine check.
-      - title: Film three phases
-        text: Face, walking gait and active motion, with tips on screen.
+      - chapter: Setup
+        title: Tell us about you
+        text: A short owner profile, so reports and vet contacts have a name behind them.
+        image:
+          src: ../../assets/projects/petsight/user-registration.jpg
+          alt: User registration form filled in for Madalena Freitas
+      - title: Then about your pet
+        text: Breed, age, sex and weight. Only what the analysis actually needs.
+        image:
+          src: ../../assets/projects/petsight/pet-registration.jpg
+          alt: Pet registration for Bingo, a domestic shorthair, 4 years, 4.2 kg
+      - title: Ready for a first check-up
+        text: One screen to celebrate, one button to start.
+        image:
+          src: ../../assets/projects/petsight/all-set.jpg
+          alt: Bingo is all set screen inviting a first wellness check-up
+      - chapter: Capture
+        title: Film the face
+        text: For cats, the face tells a lot. Three tips on screen keep the shot useful.
+        note: Three phases, a few seconds each. Bingo was very patient.
+        image:
+          src: ../../assets/projects/petsight/phase-face.jpg
+          alt: Camera view for phase 1, framing Bingo's face, with three tips
+      - title: Then the walk
+        text: A few steps across the room show how the pet moves and carries its weight.
+        image:
+          src: ../../assets/projects/petsight/phase-walk.jpg
+          alt: Camera view for phase 2, walking gait, framing the cat
+      - title: And how it moves
+        text: A jump or a stretch, filmed from the side, shows the range of motion.
+        image:
+          src: ../../assets/projects/petsight/phase-motion.jpg
+          alt: Camera view for phase 3, active motion, filming the cat from the side
+      - chapter: Review
+        title: Check every clip
+        text: A quick quality checklist, so a shaky video gets retaken before it reaches the AI.
+        image:
+          src: ../../assets/projects/petsight/review-walk.jpg
+          alt: Review of the walking capture with a quality checklist
       - title: Get the report
-        text: Scores, an action plan and a health assistant for follow-up questions.
-  - type: phones
-    images:
-      - src: ../../assets/projects/petsight/user-registration.jpg
-        alt: User registration form filled in for Madalena Freitas
-        label: You
-      - src: ../../assets/projects/petsight/pet-registration.jpg
-        alt: Pet registration for Bingo, a domestic shorthair, 4 years, 4.2 kg
-        label: Your pet
-      - src: ../../assets/projects/petsight/all-set.jpg
-        alt: Bingo is all set screen inviting a first wellness check-up
-        label: All set
-    caption: Onboarding asks only what the analysis needs, with one clear next step on every screen.
-  - type: phones
-    images:
-      - src: ../../assets/projects/petsight/phase-face.jpg
-        alt: Camera view for phase 1, framing Bingo's face, with three tips
-        label: 1 · Face
-      - src: ../../assets/projects/petsight/phase-walk.jpg
-        alt: Camera view for phase 2, walking gait, framing the cat
-        label: 2 · Walking gait
-      - src: ../../assets/projects/petsight/phase-motion.jpg
-        alt: Camera view for phase 3, active motion, filming the cat from the side
-        label: 3 · Active motion
-    note: Three phases, a few seconds each. Bingo was very patient.
-  - type: phones
-    images:
-      - src: ../../assets/projects/petsight/review-face.jpg
-        alt: Review of the face capture with a quality checklist
-        label: Review face
-      - src: ../../assets/projects/petsight/review-walk.jpg
-        alt: Review of the walking capture with good lighting checked
-        label: Review walk
-      - src: ../../assets/projects/petsight/review-motion.jpg
-        alt: Review of the motion capture with a quality checklist
-        label: Review motion
-    caption: Each phase has three short tips and a quality check, so a shaky video gets retaken before it reaches the AI.
+        text: In under two minutes, a health assistant opens with the report and an action plan.
+        image:
+          src: ../../assets/projects/petsight/assistant.jpg
+          alt: Health assistant chat opening with Bingo's report and action plan
   - type: text
     eyebrow: The result
     title: A report you can act on
     body:
       - Three scores, each with a plain explanation, then an action plan sorted by priority. The report can be shared or saved as a PDF for the vet.
       - A health assistant opens with the report, so owners can ask what a score means or what to do next.
-  - type: phones
-    images:
-      - src: ../../assets/projects/petsight/assistant.jpg
-        alt: Health assistant chat opening with Bingo's report and action plan
-        label: Health assistant
-      - src: ../../assets/projects/petsight/summary.jpg
-        alt: Health summary with facial symmetry 92%, gait regularity 74% and range of motion 81%
-        label: Health summary
+  - type: report
+    phone:
+      src: ../../assets/projects/petsight/summary.jpg
+      alt: Health summary with facial symmetry 92%, gait regularity 74% and range of motion 81%
+    scores:
+      - label: Facial symmetry
+        value: 92
+        tone: good
+        text: No visible asymmetry. Jaw and eye spacing within normal range.
+      - label: Gait regularity
+        value: 74
+        tone: warn
+        text: Minor irregularity in the left hind leg stride.
+      - label: Range of motion
+        value: 81
+        tone: good
+        text: Flexion and extension within normal bounds.
+    actions:
+      - priority: Medium priority
+        text: Record a new 30-second mobility video tomorrow morning.
+      - priority: Medium priority
+        text: Avoid jumping and high-impact running for the next 24 hours.
+    caption: Each score comes with a plain explanation, and the action plan turns it into next steps.
     note: 74% gait? Probably just a lazy Sunday.
   - type: text
     eyebrow: Use case
     title: When something looks wrong
     body:
       - Not every check-up is routine. In this scenario, the owner spots a red swelling on his cat's paw.
-      - PetSight asks where it is and how much it seems to bother the cat, then switches from video to photos of the paw from two angles. The same report adapts to the worry, rating redness, swelling and skin integrity, and suggesting what to do next.
-  - type: phones
-    images:
-      - src: ../../assets/projects/petsight/paw-symptom.jpg
-        alt: What are you noticing screen with the note about a red swelling on the cat's paw
-        label: The worry
-      - src: ../../assets/projects/petsight/paw-area.jpg
-        alt: Affected area body map with the back leg selected
-        label: Where it is
-      - src: ../../assets/projects/petsight/paw-discomfort.jpg
-        alt: Discomfort level scale from 1 to 5 with level 2 selected
-        label: How much
-  - type: phones
-    images:
-      - src: ../../assets/projects/petsight/paw-photo-intro.jpg
-        alt: Photo assessment intro explaining two photos of the paw
-        label: Two photos
-      - src: ../../assets/projects/petsight/paw-camera.jpg
-        alt: Camera view framing the bottom of the cat's paw
-        label: Bottom of the paw
-      - src: ../../assets/projects/petsight/paw-report.jpg
+      - PetSight asks where it is and how much it seems to bother the cat, then switches from video to photos of the paw. The same report adapts to the worry.
+  - type: story
+    steps:
+      - title: Notice
+        text: The owner describes the worry in his own words.
+        chips: [Limping, Lethargy, Scratching, Other]
+        quote: I need to figure out what this red swelling on my cat's paw is.
+      - title: Point
+        text: A body map narrows it down to the back leg.
+        image:
+          src: ../../assets/projects/petsight/story-area.jpg
+          alt: Cat body map with the back leg selected
+      - title: Rate
+        text: How much does it seem to bother the cat, from 1 to 5.
+        scale: { value: 2, max: 5, low: Very mild, high: Severe / Urgent }
+      - title: Photograph
+        text: Two photos of the paw, top and bottom, instead of a video.
+        image:
+          src: ../../assets/projects/petsight/story-photo.jpg
+          alt: Camera framing the bottom of the cat's paw inside a circle guide
+    result:
+      title: A report that fits the worry
+      text: Redness, swelling and skin integrity get their own scores, with care steps like washing the paw and a cold compress.
+      image:
+        src: ../../assets/projects/petsight/paw-report.jpg
         alt: Health summary with erythema intensity, edema estimation and surface integrity
-        label: Paw report
   - type: text
     eyebrow: Beyond one scan
     title: Health that adds up over time

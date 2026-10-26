@@ -1,0 +1,294 @@
+---
+// Um só iPhone parado ao lado do texto: à medida que os passos passam,
+// o ecrã dentro dele muda. No telemóvel cada passo mostra o seu ecrã.
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import PhoneFrame from './PhoneFrame.astro';
+
+interface Step {
+  chapter?: string;
+  title: string;
+  text: string;
+  note?: string;
+  image: { src: ImageMetadata; alt: string };
+}
+interface Props {
+  eyebrow?: string;
+  title: string;
+  lede?: string;
+  steps: Step[];
+}
+const { eyebrow, title, lede, steps } = Astro.props;
+const chapters = [...new Set(steps.map((s) => s.chapter).filter(Boolean))] as string[];
+---
+
+<section class="scrolly" data-scrolly data-fred-section={eyebrow ?? title}>
+  <header class="scrolly__head" data-reveal>
+    {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+    <h2>{title}</h2>
+    {lede && <p class="scrolly__lede">{lede}</p>}
+  </header>
+
+  <div class="scrolly__body">
+    <ol class="scrolly__steps">
+      {
+        steps.map((s, i) => (
+          <li class:list={['scrolly__step', { 'is-active': i === 0 }]} data-step={i} data-fred-note={s.note}>
+            {s.chapter && <p class="scrolly__chapter">{s.chapter}</p>}
+            <h3>{s.title}</h3>
+            <p>{s.text}</p>
+            <div class="scrolly__inline">
+              <PhoneFrame>
+                <Image src={s.image.src} alt={s.image.alt} widths={[393, 786]} quality={92} sizes="60vw" />
+              </PhoneFrame>
+            </div>
+          </li>
+        ))
+      }
+    </ol>
+
+    <div class="scrolly__stage" aria-hidden="true">
+      <div class="scrolly__sticky">
+        {
+          chapters.length > 1 && (
+            <ul class="scrolly__chapters">
+              {chapters.map((c, i) => (
+                <li class:list={{ 'is-active': i === 0 }} data-chapter={c}>
+                  {c}
+                </li>
+              ))}
+            </ul>
+          )
+        }
+        <div class="scrolly__phone">
+        <PhoneFrame>
+          {
+            steps.map((s, i) => (
+              <Image
+                class:list={['scrolly__screen', { 'is-active': i === 0 }]}
+                src={s.image.src}
+                alt=""
+                widths={[393, 786]}
+                quality={92}
+                sizes="20rem"
+                loading={i < 2 ? 'eager' : 'lazy'}
+              />
+            ))
+          }
+        </PhoneFrame>
+        </div>
+        <div class="scrolly__progress"><span></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  // O passo mais perto do meio do ecrã fica ativo e o iPhone mostra o seu ecrã
+  document.querySelectorAll<HTMLElement>('[data-scrolly]').forEach((root) => {
+    const steps = [...root.querySelectorAll<HTMLElement>('[data-step]')];
+    const screens = [...root.querySelectorAll<HTMLElement>('.scrolly__screen')];
+    const chapters = [...root.querySelectorAll<HTMLElement>('[data-chapter]')];
+    const bar = root.querySelector<HTMLElement>('.scrolly__progress span');
+    let current = 0;
+
+    const show = (i: number) => {
+      current = i;
+      steps.forEach((el, k) => el.classList.toggle('is-active', k === i));
+      screens.forEach((el, k) => {
+        el.classList.toggle('is-active', k === i);
+        el.classList.toggle('is-before', k < i);
+      });
+      const chapter = steps[i].querySelector('.scrolly__chapter')?.textContent ?? chapterOf(i);
+      chapters.forEach((el) => el.classList.toggle('is-active', el.dataset.chapter === chapter));
+      if (bar) bar.style.scale = `${(i + 1) / steps.length} 1`;
+    };
+    // um passo sem capítulo herda o do passo anterior
+    const chapterOf = (i: number): string | undefined => {
+      for (let k = i; k >= 0; k--) {
+        const c = steps[k].querySelector('.scrolly__chapter')?.textContent;
+        if (c) return c;
+      }
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const i = Number((entry.target as HTMLElement).dataset.step);
+          if (i !== current) show(i);
+        }
+      },
+      { rootMargin: '-45% 0px -45% 0px' },
+    );
+    steps.forEach((el) => observer.observe(el));
+    show(0);
+  });
+</script>
+
+<style>
+  .scrolly {
+    display: grid;
+    gap: var(--space-12);
+  }
+
+  .scrolly__lede {
+    max-width: 58ch;
+    margin-top: var(--space-4);
+    font-size: var(--text-lg);
+    color: var(--color-text-2);
+  }
+
+  .scrolly__steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--space-16);
+  }
+
+  .scrolly__step {
+    display: grid;
+    gap: var(--space-3);
+    align-content: center;
+  }
+
+  .scrolly__chapter {
+    font-size: var(--text-sm);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+  }
+
+  .scrolly__step h3 {
+    font-size: var(--text-title);
+  }
+
+  .scrolly__step p:not(.scrolly__chapter) {
+    max-width: 40ch;
+    font-size: var(--text-lg);
+    color: var(--color-text-2);
+  }
+
+  .scrolly__inline {
+    width: min(62%, 15rem);
+    margin-top: var(--space-4);
+  }
+
+  .scrolly__stage {
+    display: none;
+  }
+
+  /* Computador: texto à esquerda, iPhone parado à direita */
+  @media (min-width: 56rem) {
+    .scrolly__body {
+      display: grid;
+      grid-template-columns: 1fr minmax(0, 24rem);
+      column-gap: var(--space-16);
+    }
+
+    .scrolly__steps {
+      gap: 0;
+      padding-block: 10vh 30vh;
+    }
+
+    .scrolly__step {
+      min-height: 62vh;
+      opacity: 0.28;
+      transition: opacity 0.5s ease;
+    }
+
+    .scrolly__step.is-active {
+      opacity: 1;
+    }
+
+    .scrolly__inline {
+      display: none;
+    }
+
+    .scrolly__stage {
+      display: block;
+    }
+
+    .scrolly__sticky {
+      position: sticky;
+      top: max(var(--space-8), calc(50vh - min(19rem, 41vh) - 2rem));
+      display: grid;
+      justify-items: center;
+      gap: var(--space-6);
+    }
+
+    .scrolly__phone {
+      width: min(18.5rem, 39vh);
+    }
+
+    .scrolly__screen {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      scale: 1.04;
+      transition:
+        opacity 0.55s ease,
+        scale 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .scrolly__screen.is-before {
+      scale: 0.97;
+    }
+
+    .scrolly__screen.is-active {
+      opacity: 1;
+      scale: 1;
+    }
+
+    .scrolly__chapters {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    .scrolly__chapters li {
+      padding: var(--space-1) var(--space-3);
+      border-radius: 999px;
+      border: 1px solid var(--color-line);
+      font-size: var(--text-sm);
+      color: var(--color-muted);
+      transition:
+        color 0.3s,
+        background 0.3s,
+        border-color 0.3s;
+    }
+
+    .scrolly__chapters li.is-active {
+      color: var(--color-bg);
+      background: var(--color-accent);
+      border-color: var(--color-accent);
+    }
+
+    .scrolly__progress {
+      width: min(18.5rem, 39vh);
+      height: 2px;
+      border-radius: 2px;
+      background: var(--color-line-strong);
+      overflow: hidden;
+    }
+
+    .scrolly__progress span {
+      display: block;
+      height: 100%;
+      background: var(--color-accent);
+      transform-origin: left;
+      scale: 0 1;
+      transition: scale 0.5s ease;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scrolly__screen,
+    .scrolly__step {
+      transition: none;
+    }
+  }
+</style>

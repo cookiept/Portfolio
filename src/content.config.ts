@@ -21,6 +21,39 @@ const projects = defineCollection({
       z.object({ type: z.literal('tall'), images: z.array(shot), caption: z.string().optional(), note: z.string().optional() }),
       // Ecrãs de telemóvel lado a lado (scroll horizontal no telemóvel)
       z.object({ type: z.literal('phones'), images: z.array(shot), caption: z.string().optional(), note: z.string().optional() }),
+      // Um iPhone parado ao lado do texto; o ecrã muda a cada passo
+      z.object({
+        type: z.literal('scrolly'),
+        eyebrow: z.string().optional(),
+        title: z.string(),
+        lede: z.string().optional(),
+        steps: z.array(z.object({ chapter: z.string().optional(), title: z.string(), text: z.string(), note: z.string().optional(), image: shot })),
+      }),
+      // Relatório desmontado: iPhone ao centro, pontuações e ações a flutuar
+      z.object({
+        type: z.literal('report'),
+        phone: shot,
+        scores: z.array(z.object({ label: z.string(), value: z.number(), text: z.string(), tone: z.enum(['good', 'warn']) })),
+        actions: z.array(z.object({ priority: z.string(), text: z.string() })),
+        caption: z.string().optional(),
+        note: z.string().optional(),
+      }),
+      // Um caso contado como tira de passos, com o resultado num iPhone
+      z.object({
+        type: z.literal('story'),
+        steps: z.array(
+          z.object({
+            title: z.string(),
+            text: z.string(),
+            chips: z.array(z.string()).optional(),
+            quote: z.string().optional(),
+            image: shot.optional(),
+            scale: z.object({ value: z.number(), max: z.number(), low: z.string(), high: z.string() }).optional(),
+          }),
+        ),
+        result: z.object({ title: z.string(), text: z.string(), image: shot }),
+        note: z.string().optional(),
+      }),
       // Passos numerados
       z.object({ type: z.literal('steps'), title: z.string(), steps: z.array(z.object({ title: z.string(), text: z.string() })) }),
       // Sistema visual: cores e tipos de letra
