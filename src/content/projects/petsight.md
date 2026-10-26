@@ -49,16 +49,19 @@ blocks:
         image:
           src: ../../assets/projects/petsight/user-registration.jpg
           alt: User registration form filled in for Madalena Freitas
+        mockup: ../../assets/projects/petsight/hand/user-registration.webp
       - title: Then about your pet
         text: Breed, age, sex and weight. Only what the analysis actually needs.
         image:
           src: ../../assets/projects/petsight/pet-registration.jpg
           alt: Pet registration for Bingo, a domestic shorthair, 4 years, 4.2 kg
+        mockup: ../../assets/projects/petsight/hand/pet-registration.webp
       - title: Ready for a first check-up
         text: One screen to celebrate, one button to start.
         image:
           src: ../../assets/projects/petsight/all-set.jpg
           alt: Bingo is all set screen inviting a first wellness check-up
+        mockup: ../../assets/projects/petsight/hand/all-set.webp
       - chapter: Capture
         title: Film the face
         text: For cats, the face tells a lot. Three tips on screen keep the shot useful.
@@ -66,27 +69,32 @@ blocks:
         image:
           src: ../../assets/projects/petsight/phase-face.jpg
           alt: Camera view for phase 1, framing Bingo's face, with three tips
+        mockup: ../../assets/projects/petsight/hand/phase-face.webp
       - title: Then the walk
         text: A few steps across the room show how the pet moves and carries its weight.
         image:
           src: ../../assets/projects/petsight/phase-walk.jpg
           alt: Camera view for phase 2, walking gait, framing the cat
+        mockup: ../../assets/projects/petsight/hand/phase-walk.webp
       - title: And how it moves
         text: A jump or a stretch, filmed from the side, shows the range of motion.
         image:
           src: ../../assets/projects/petsight/phase-motion.jpg
           alt: Camera view for phase 3, active motion, filming the cat from the side
+        mockup: ../../assets/projects/petsight/hand/phase-motion.webp
       - chapter: Review
         title: Check every clip
         text: A quick quality checklist, so a shaky video gets retaken before it reaches the AI.
         image:
           src: ../../assets/projects/petsight/review-walk.jpg
           alt: Review of the walking capture with a quality checklist
+        mockup: ../../assets/projects/petsight/hand/review-walk.webp
       - title: Get the report
         text: In under two minutes, a health assistant opens with the report and an action plan.
         image:
           src: ../../assets/projects/petsight/assistant.jpg
           alt: Health assistant chat opening with Bingo's report and action plan
+        mockup: ../../assets/projects/petsight/hand/assistant.webp
   - type: text
     eyebrow: The result
     title: A report you can act on

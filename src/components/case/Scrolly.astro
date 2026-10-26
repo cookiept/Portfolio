@@ -1,6 +1,8 @@
 ---
 // Um só iPhone parado ao lado do texto: à medida que os passos passam,
 // o ecrã dentro dele muda. No telemóvel cada passo mostra o seu ecrã.
+// Se os passos tiverem `mockup` (a mão com o iPhone e o ecrã já colado,
+// um por passo), no computador mostra essas fotos em vez da moldura CSS.
 import { Image } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 import PhoneFrame from './PhoneFrame.astro';
@@ -11,6 +13,7 @@ interface Step {
   text: string;
   note?: string;
   image: { src: ImageMetadata; alt: string };
+  mockup?: ImageMetadata;
 }
 interface Props {
   eyebrow?: string;
@@ -19,6 +22,7 @@ interface Props {
   steps: Step[];
 }
 const { eyebrow, title, lede, steps } = Astro.props;
+const mockups = steps.every((s) => s.mockup);
 const chapters = [...new Set(steps.map((s) => s.chapter).filter(Boolean))] as string[];
 ---
 
@@ -60,24 +64,44 @@ const chapters = [...new Set(steps.map((s) => s.chapter).filter(Boolean))] as st
             </ul>
           )
         }
-        <div class="scrolly__phone">
-        <PhoneFrame>
-          {
-            steps.map((s, i) => (
-              <Image
-                class:list={['scrolly__screen', { 'is-active': i === 0 }]}
-                src={s.image.src}
-                alt=""
-                widths={[393, 786]}
-                quality={92}
-                sizes="20rem"
-                loading={i < 2 ? 'eager' : 'lazy'}
-              />
-            ))
-          }
-        </PhoneFrame>
-        </div>
-        <div class="scrolly__progress"><span></span></div>
+        {
+          mockups ? (
+            <div class="scrolly__hand">
+              {steps.map((s, i) => (
+                <Image
+                  class:list={['scrolly__screen', { 'is-active': i === 0 }]}
+                  src={s.mockup!}
+                  alt=""
+                  widths={[480, 750]}
+                  quality={92}
+                  sizes="28rem"
+                  loading={i < 2 ? 'eager' : 'lazy'}
+                />
+              ))}
+            </div>
+          ) : (
+            <>
+              <div class="scrolly__phone">
+                <PhoneFrame>
+                  {steps.map((s, i) => (
+                    <Image
+                      class:list={['scrolly__screen', { 'is-active': i === 0 }]}
+                      src={s.image.src}
+                      alt=""
+                      widths={[393, 786]}
+                      quality={92}
+                      sizes="20rem"
+                      loading={i < 2 ? 'eager' : 'lazy'}
+                    />
+                  ))}
+                </PhoneFrame>
+              </div>
+              <div class="scrolly__progress">
+                <span />
+              </div>
+            </>
+          )
+        }
       </div>
     </div>
   </div>
@@ -183,7 +207,7 @@ const chapters = [...new Set(steps.map((s) => s.chapter).filter(Boolean))] as st
   @media (min-width: 56rem) {
     .scrolly__body {
       display: grid;
-      grid-template-columns: 1fr minmax(0, 24rem);
+      grid-template-columns: 1fr minmax(0, 28rem);
       column-gap: var(--space-16);
     }
 
@@ -239,6 +263,26 @@ const chapters = [...new Set(steps.map((s) => s.chapter).filter(Boolean))] as st
     .scrolly__screen.is-active {
       opacity: 1;
       scale: 1;
+    }
+
+    /* Mão com o iPhone: as fotos só diferem no ecrã, por isso basta
+       trocar a opacidade (sem zoom, para a mão não mexer) */
+    .scrolly__sticky:has(.scrolly__hand) {
+      top: max(var(--space-6), calc(50vh - 26rem));
+      gap: var(--space-4);
+    }
+
+    .scrolly__hand {
+      position: relative;
+      width: min(28rem, 58vh);
+      aspect-ratio: 750 / 1306;
+    }
+
+    .scrolly__hand .scrolly__screen {
+      width: 100%;
+      height: auto;
+      scale: 1;
+      transition: opacity 0.45s ease;
     }
 
     .scrolly__chapters {

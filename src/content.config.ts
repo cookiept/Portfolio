@@ -27,7 +27,7 @@ const projects = defineCollection({
         eyebrow: z.string().optional(),
         title: z.string(),
         lede: z.string().optional(),
-        steps: z.array(z.object({ chapter: z.string().optional(), title: z.string(), text: z.string(), note: z.string().optional(), image: shot })),
+        steps: z.array(z.object({ chapter: z.string().optional(), title: z.string(), text: z.string(), note: z.string().optional(), image: shot, mockup: image().optional() })),
       }),
       // Relatório desmontado: iPhone ao centro, pontuações e ações a flutuar
       z.object({
