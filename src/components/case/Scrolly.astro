@@ -72,8 +72,8 @@ const chapters = [...new Set(steps.map((s) => s.chapter).filter(Boolean))] as st
                   class:list={['scrolly__screen', { 'is-active': i === 0 }]}
                   src={s.mockup!}
                   alt=""
-                  widths={[560, 935]}
-                  quality={92}
+                  widths={[600, 1208]}
+                  quality={95}
                   sizes="34rem"
                   loading={i < 2 ? 'eager' : 'lazy'}
                 />
@@ -275,7 +275,7 @@ const chapters = [...new Set(steps.map((s) => s.chapter).filter(Boolean))] as st
     .scrolly__hand {
       position: relative;
       width: min(34rem, 64vh);
-      aspect-ratio: 935 / 1308;
+      aspect-ratio: 1208 / 1697;
     }
 
     .scrolly__hand .scrolly__screen {
