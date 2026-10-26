@@ -156,6 +156,7 @@ blocks:
       image:
         src: ../../assets/projects/petsight/paw-report.jpg
         alt: Health summary with erythema intensity, edema estimation and surface integrity
+      mockup: ../../assets/projects/petsight/hand/phone-paw-report.webp
   - type: text
     eyebrow: Beyond one scan
     title: Health that adds up over time

@@ -51,7 +51,7 @@ const projects = defineCollection({
             scale: z.object({ value: z.number(), max: z.number(), low: z.string(), high: z.string() }).optional(),
           }),
         ),
-        result: z.object({ title: z.string(), text: z.string(), image: shot }),
+        result: z.object({ title: z.string(), text: z.string(), image: shot, mockup: image().optional() }),
         note: z.string().optional(),
       }),
       // Passos numerados

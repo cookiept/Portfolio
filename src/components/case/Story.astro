@@ -16,7 +16,8 @@ interface Step {
 }
 interface Props {
   steps: Step[];
-  result: { title: string; text: string; image: { src: ImageMetadata; alt: string } };
+  // mockup: foto de um iPhone real com o ecrã já colado (opcional)
+  result: { title: string; text: string; image: { src: ImageMetadata; alt: string }; mockup?: ImageMetadata };
   note?: string;
 }
 const { steps, result, note } = Astro.props;
@@ -63,9 +64,15 @@ const { steps, result, note } = Astro.props;
 
   <div class="story__result">
     <div class="story__phone">
-      <PhoneFrame>
-        <Image src={result.image.src} alt={result.image.alt} widths={[393, 786]} quality={92} sizes="16rem" />
-      </PhoneFrame>
+      {
+        result.mockup ? (
+          <Image class="story__mockup" src={result.mockup} alt={result.image.alt} widths={[400, 583]} quality={95} sizes="(min-width: 56rem) 18rem, 60vw" />
+        ) : (
+          <PhoneFrame>
+            <Image src={result.image.src} alt={result.image.alt} widths={[393, 786]} quality={92} sizes="16rem" />
+          </PhoneFrame>
+        )
+      }
     </div>
     <div class="story__result-text">
       <span class="story__num">→</span>
@@ -242,6 +249,15 @@ const { steps, result, note } = Astro.props;
     width: min(60%, 15rem);
   }
 
+  .story__phone :global(.story__mockup) {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 0;
+    border-radius: 0;
+    filter: drop-shadow(0 2rem 2.5rem rgb(0 0 0 / 0.55));
+  }
+
   .story__result-text {
     display: grid;
     gap: var(--space-2);
@@ -260,7 +276,7 @@ const { steps, result, note } = Astro.props;
     }
 
     .story__result {
-      grid-template-columns: minmax(0, 16rem) minmax(0, 1fr);
+      grid-template-columns: minmax(0, 18rem) minmax(0, 1fr);
       column-gap: var(--space-16);
       justify-content: center;
       padding-inline: 10%;
