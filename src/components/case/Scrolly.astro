@@ -72,9 +72,9 @@ const chapters = [...new Set(steps.map((s) => s.chapter).filter(Boolean))] as st
                   class:list={['scrolly__screen', { 'is-active': i === 0 }]}
                   src={s.mockup!}
                   alt=""
-                  widths={[480, 750]}
+                  widths={[560, 935]}
                   quality={92}
-                  sizes="28rem"
+                  sizes="34rem"
                   loading={i < 2 ? 'eager' : 'lazy'}
                 />
               ))}
@@ -207,7 +207,7 @@ const chapters = [...new Set(steps.map((s) => s.chapter).filter(Boolean))] as st
   @media (min-width: 56rem) {
     .scrolly__body {
       display: grid;
-      grid-template-columns: 1fr minmax(0, 28rem);
+      grid-template-columns: 1fr minmax(0, 32rem);
       column-gap: var(--space-16);
     }
 
@@ -274,8 +274,8 @@ const chapters = [...new Set(steps.map((s) => s.chapter).filter(Boolean))] as st
 
     .scrolly__hand {
       position: relative;
-      width: min(28rem, 58vh);
-      aspect-ratio: 750 / 1306;
+      width: min(34rem, 64vh);
+      aspect-ratio: 935 / 1308;
     }
 
     .scrolly__hand .scrolly__screen {
