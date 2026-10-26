@@ -23,7 +23,6 @@ interface Props {
 }
 const { eyebrow, title, lede, steps } = Astro.props;
 const mockups = steps.every((s) => s.mockup);
-const chapters = [...new Set(steps.map((s) => s.chapter).filter(Boolean))] as string[];
 ---
 
 <section class="scrolly" data-scrolly data-fred-section={eyebrow ?? title}>
@@ -57,17 +56,6 @@ const chapters = [...new Set(steps.map((s) => s.chapter).filter(Boolean))] as st
 
     <div class="scrolly__stage" aria-hidden="true">
       <div class="scrolly__sticky">
-        {
-          chapters.length > 1 && (
-            <ul class="scrolly__chapters">
-              {chapters.map((c, i) => (
-                <li class:list={{ 'is-active': i === 0 }} data-chapter={c}>
-                  {c}
-                </li>
-              ))}
-            </ul>
-          )
-        }
         {
           mockups ? (
             <div class="scrolly__hand">
@@ -360,32 +348,6 @@ const chapters = [...new Set(steps.map((s) => s.chapter).filter(Boolean))] as st
       height: auto;
       scale: 1;
       transition: opacity 0.45s ease;
-    }
-
-    .scrolly__chapters {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      gap: var(--space-2);
-    }
-
-    .scrolly__chapters li {
-      padding: var(--space-1) var(--space-3);
-      border-radius: 999px;
-      border: 1px solid var(--color-line);
-      font-size: var(--text-sm);
-      color: var(--color-muted);
-      transition:
-        color 0.3s,
-        background 0.3s,
-        border-color 0.3s;
-    }
-
-    .scrolly__chapters li.is-active {
-      color: var(--color-bg);
-      background: var(--color-accent);
-      border-color: var(--color-accent);
     }
 
     .scrolly__progress {
