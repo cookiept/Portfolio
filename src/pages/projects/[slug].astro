@@ -22,6 +22,7 @@ import Manifesto from '@components/case/Manifesto.astro';
 import Swap from '@components/case/Swap.astro';
 import Compare from '@components/case/Compare.astro';
 import Strip from '@components/case/Strip.astro';
+import Deck from '@components/case/Deck.astro';
 import { site } from '@data/site';
 import { withBase } from '../../utils/url';
 
@@ -132,6 +133,7 @@ const shotWidths = [600, 1000, 1512];
                   {b.caption && <figcaption>{b.caption}</figcaption>}
                 </figure>
               );
+            if (b.type === 'scrolly' && b.layout === 'deck') return <Deck device={device} eyebrow={b.eyebrow} title={b.title} lede={b.lede} steps={b.steps} />;
             if (b.type === 'scrolly' && b.layout === 'strip') return <Strip device={device} eyebrow={b.eyebrow} title={b.title} lede={b.lede} steps={b.steps} />;
             if (b.type === 'scrolly') return <Scrolly device={device} eyebrow={b.eyebrow} title={b.title} lede={b.lede} steps={b.steps} />;
             if (b.type === 'report') return <Report bridge={b.bridge} title={b.title} mockup={b.mockup} phone={b.phone} scores={b.scores} actions={b.actions} caption={b.caption} note={b.note} />;

@@ -1,0 +1,289 @@
+---
+// Baralho de iPhones: no computador a secção fica presa enquanto se faz
+// scroll. Os iPhones começam empilhados, abrem-se em leque e depois cada um
+// sobe à vez, com o texto do seu passo por baixo. No telemóvel é uma fita
+// que se arrasta com o dedo.
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import PhoneFrame from './PhoneFrame.astro';
+
+interface Step {
+  title: string;
+  text: string;
+  note?: string;
+  image: { src: ImageMetadata; alt: string };
+}
+interface Props {
+  device?: 'css' | 'iphone15';
+  eyebrow?: string;
+  title: string;
+  lede?: string;
+  steps: Step[];
+}
+const { eyebrow, title, lede, steps, device = 'css' } = Astro.props;
+---
+
+<section class="deck" data-deck data-fred-section={eyebrow ?? title} style={`--n:${steps.length}`}>
+  <header class="deck__head" data-reveal>
+    {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+    <h2>{title}</h2>
+    {lede && <p class="deck__lede">{lede}</p>}
+  </header>
+
+  <div class="deck__run">
+    <div class="deck__pin">
+      <ol class="deck__cards">
+        {
+          steps.map((s, i) => (
+            <li class="deck__card" data-card={i} data-fred-note={s.note}>
+              <div class="deck__phone">
+                <PhoneFrame device={device}>
+                  <Image src={s.image.src} alt={s.image.alt} widths={[400, 804]} quality={92} sizes="(min-width: 56rem) 14rem, 60vw" loading={i < 3 ? 'eager' : 'lazy'} />
+                </PhoneFrame>
+              </div>
+              <div class="deck__text">
+                <span class="deck__num">{String(i + 1).padStart(2, '0')}</span>
+                <h3>{s.title}</h3>
+                <p>{s.text}</p>
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+      <ol class="deck__captions" aria-hidden="true">
+        {
+          steps.map((s, i) => (
+            <li data-caption={i}>
+              <span class="deck__num">{String(i + 1).padStart(2, '0')}</span>
+              <h3>{s.title}</h3>
+              <p>{s.text}</p>
+            </li>
+          ))
+        }
+      </ol>
+      <div class="deck__dots" aria-hidden="true">
+        {steps.map((_, i) => <span data-dot={i} />)}
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-deck]').forEach((root) => {
+    const run = root.querySelector<HTMLElement>('.deck__run')!;
+    const cards = [...root.querySelectorAll<HTMLElement>('[data-card]')];
+    const dots = [...root.querySelectorAll<HTMLElement>('[data-dot]')];
+    const captions = [...root.querySelectorAll<HTMLElement>('[data-caption]')];
+    const desk = window.matchMedia('(min-width: 56rem) and (prefers-reduced-motion: no-preference)');
+    const n = cards.length;
+    const FAN = 0.28; // parte do scroll usada para abrir o leque
+    let raf = 0;
+    let active = -1;
+
+    const ease = (t: number) => 1 - Math.pow(1 - t, 3);
+
+    const update = () => {
+      raf = 0;
+      if (!desk.matches) {
+        cards.forEach((c) => c.removeAttribute('style'));
+        return;
+      }
+      const r = run.getBoundingClientRect();
+      const k = Math.min(1, Math.max(0, -r.top / (r.height - window.innerHeight)));
+      const fan = ease(Math.min(1, k / FAN));
+      // posição contínua do baralho: o cartão em p fica ao centro
+      const p = Math.min(1, Math.max(0, (k - FAN) / (0.92 - FAN))) * (n - 1);
+      const a = Math.round(p);
+      const gap = Math.min(run.clientWidth / 5.2, 220);
+
+      cards.forEach((c, i) => {
+        const t = i - p;
+        const d = Math.min(1, Math.abs(t));
+        // empilhado (fan=0) -> leque em arco, com o cartão ativo levantado ao centro
+        const x = t * (4 + (gap - 4) * fan);
+        const y = Math.min(t * t, 9) * 10 * fan - (1 - d) * 36 * fan - (1 - fan) * Math.min(i, 5) * 3;
+        const rot = t * (1.2 + 6 * fan);
+        const sc = 1 + 0.08 * fan * (1 - d) - 0.1 * fan * d;
+        c.style.translate = `calc(-50% + ${x}px) ${y}px`;
+        c.style.rotate = `${rot}deg`;
+        c.style.scale = String(sc);
+        c.style.zIndex = String(100 - Math.round(Math.abs(t) * 10));
+        c.style.setProperty('--dim', String(0.5 * fan * Math.min(1, Math.abs(t) * 1.4)));
+        c.style.opacity = Math.abs(t) > 3.6 ? '0' : '1';
+      });
+
+      if (a !== active) {
+        active = a;
+        captions.forEach((c, i) => c.classList.toggle('is-active', i === a));
+        dots.forEach((d, i) => d.classList.toggle('is-on', i <= a));
+      }
+      root.classList.toggle('is-open', fan > 0.9);
+    };
+    const ask = () => raf || (raf = requestAnimationFrame(update));
+    window.addEventListener('scroll', ask, { passive: true });
+    window.addEventListener('resize', ask);
+    desk.addEventListener('change', ask);
+    update();
+  });
+</script>
+
+<style>
+  .deck {
+    display: grid;
+    gap: var(--space-8);
+  }
+
+  .deck__lede {
+    max-width: 58ch;
+    margin-top: var(--space-4);
+    font-size: var(--text-lg);
+    color: var(--color-text-2);
+  }
+
+  /* Telemóvel: fita normal com scroll horizontal */
+  .deck__cards {
+    list-style: none;
+    margin: 0 calc(var(--gutter) * -1);
+    padding: 0 var(--gutter);
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: min(68vw, 16rem);
+    gap: var(--space-6);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .deck__card {
+    display: grid;
+    gap: var(--space-6);
+    align-content: start;
+    scroll-snap-align: start;
+  }
+
+  .deck__text {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .deck__num {
+    font-size: var(--text-sm);
+    color: #f9c8a9;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .deck__text h3 {
+    font-size: var(--text-title);
+  }
+
+  .deck__text p {
+    color: var(--color-text-2);
+  }
+
+  .deck__dots,
+  .deck__captions {
+    display: none;
+  }
+
+  .deck__captions {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .deck__captions h3 {
+    font-size: var(--text-title);
+  }
+
+  .deck__captions p {
+    color: var(--color-text-2);
+  }
+
+  /* Computador: secção alta com o baralho preso a meio do ecrã */
+  @media (min-width: 56rem) and (prefers-reduced-motion: no-preference) {
+    .deck__run {
+      height: calc(100vh + var(--n) * 42vh);
+    }
+
+    .deck__pin {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: grid;
+      align-content: center;
+      padding-block: var(--space-12) var(--space-8);
+    }
+
+    .deck__cards {
+      position: relative;
+      display: block;
+      height: min(27rem, 52vh);
+      margin: 0;
+      padding: 0;
+      overflow: visible;
+    }
+
+    .deck__card {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      width: min(13rem, 25vh);
+      transform-origin: 50% 85%;
+      transition: opacity 0.4s ease;
+    }
+
+    /* os cartões que não estão ativos ficam um pouco mais escuros */
+    .deck__phone {
+      transition: filter 0.4s ease;
+      filter: brightness(calc(1 - var(--dim, 0)));
+    }
+
+    /* no computador o texto fica numa legenda fixa por baixo do cartão do meio */
+    .deck__card .deck__text {
+      display: none;
+    }
+
+    .deck__captions {
+      display: grid;
+      justify-items: center;
+      margin-top: var(--space-12);
+    }
+
+    .deck__captions li {
+      grid-area: 1 / 1;
+      display: grid;
+      gap: var(--space-2);
+      max-width: 22rem;
+      text-align: center;
+      opacity: 0;
+      translate: 0 0.5rem;
+      transition:
+        opacity 0.35s ease,
+        translate 0.5s var(--ease-out);
+    }
+
+    .deck.is-open .deck__captions li.is-active {
+      opacity: 1;
+      translate: 0 0;
+    }
+
+    .deck__dots {
+      display: flex;
+      justify-content: center;
+      gap: var(--space-2);
+      padding-top: var(--space-8);
+    }
+
+    .deck__dots span {
+      width: 1.5rem;
+      height: 3px;
+      border-radius: 2px;
+      background: var(--color-line-strong);
+      transition: background-color 0.3s ease;
+    }
+
+    .deck__dots span.is-on {
+      background: #f9c8a9;
+    }
+  }
+</style>
