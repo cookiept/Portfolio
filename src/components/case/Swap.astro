@@ -1,0 +1,492 @@
+---
+// A troca de um produto contada sozinha: o iPhone mostra o render e, ao lado,
+// uma conta com o orçamento. Quando entra no ecrã, o produto caro troca pelo
+// alternativo, o total desce e a barra volta para dentro do orçamento.
+// Um botão pequeno repete a troca.
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import PhoneFrame from './PhoneFrame.astro';
+
+interface Item {
+  name: string;
+  store?: string;
+  price: number;
+  image?: ImageMetadata;
+  swap?: { name: string; price: number; image?: ImageMetadata };
+}
+interface Props {
+  budget: number;
+  before: { src: ImageMetadata; alt: string };
+  after: { src: ImageMetadata; alt: string };
+  items: Item[];
+  caption?: string;
+  note?: string;
+}
+const { budget, before, after, items, caption, note } = Astro.props;
+
+const eur = (n: number) => `€${n.toLocaleString('en-GB')}`;
+const totalBefore = items.reduce((t, i) => t + i.price, 0);
+const totalAfter = items.reduce((t, i) => t + (i.swap?.price ?? i.price), 0);
+const saved = totalBefore - totalAfter;
+const scale = Math.max(totalBefore, budget) * 1.12;
+const pct = (n: number) => `${((n / scale) * 100).toFixed(2)}%`;
+---
+
+<figure
+  class="swap"
+  data-swap
+  data-state="before"
+  data-before={totalBefore}
+  data-after={totalAfter}
+  data-fred-note={note}
+  style={`--budget:${pct(budget)};--fill-before:${pct(totalBefore)};--fill-after:${pct(totalAfter)}`}
+>
+  <div class="swap__phone">
+    <PhoneFrame>
+      <Image class="swap__screen swap__screen--before" src={before.src} alt={before.alt} widths={[400, 804]} quality={92} sizes="(min-width: 56rem) 17rem, 60vw" />
+      <Image class="swap__screen swap__screen--after" src={after.src} alt={after.alt} widths={[400, 804]} quality={92} sizes="(min-width: 56rem) 17rem, 60vw" />
+    </PhoneFrame>
+  </div>
+
+  <div class="swap__bill">
+    <header class="swap__head">
+      <p class="swap__title">In this design</p>
+      <p class="swap__budget">Budget <strong>{eur(budget)}</strong></p>
+    </header>
+
+    <ul class="swap__items">
+      {
+        items.map((it) => (
+          <li class:list={['swap__item', { 'swap__item--swap': it.swap }]}>
+            <span class="swap__thumb">
+              {it.image ? <Image class="swap__img swap__img--old" src={it.image} alt="" widths={[256]} quality={92} /> : <span class="swap__dot" />}
+              {it.swap?.image && <Image class="swap__img swap__img--new" src={it.swap.image} alt="" widths={[256]} quality={92} />}
+            </span>
+            <span class="swap__name">
+              <span class="swap__old">{it.name}</span>
+              {it.swap && <span class="swap__new">{it.swap.name}</span>}
+              {it.store && <small>via {it.store}</small>}
+            </span>
+            <span class="swap__price">
+              <span class="swap__old">{eur(it.price)}</span>
+              {it.swap && <span class="swap__new">{eur(it.swap.price)}</span>}
+            </span>
+            {it.swap && <span class="swap__badge">Saves {eur(saved)}</span>}
+          </li>
+        ))
+      }
+    </ul>
+
+    <div class="swap__total">
+      <span>Total</span>
+      <strong data-total>{eur(totalBefore)}</strong>
+    </div>
+
+    <div class="swap__meter" aria-hidden="true">
+      <span class="swap__fill"></span>
+      <span class="swap__limit"></span>
+    </div>
+    <p class="swap__status">
+      <span class="swap__old">{eur(totalBefore - budget)} over budget</span>
+      <span class="swap__new">{eur(budget - totalAfter)} left</span>
+    </p>
+
+    <button class="swap__replay" type="button" data-replay>↺ Swap again</button>
+  </div>
+
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-swap]').forEach((root) => {
+    const totalEl = root.querySelector<HTMLElement>('[data-total]')!;
+    const from = Number(root.dataset.before);
+    const to = Number(root.dataset.after);
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const eur = (n: number) => `€${Math.round(n).toLocaleString('en-GB')}`;
+    let timer = 0;
+    let frame = 0;
+
+    // o total conta até ao novo valor
+    const count = (a: number, b: number) => {
+      cancelAnimationFrame(frame);
+      if (still) return void (totalEl.textContent = eur(b));
+      const t0 = performance.now();
+      const step = (t: number) => {
+        const k = Math.min(1, (t - t0) / 900);
+        const e = 1 - Math.pow(1 - k, 3);
+        totalEl.textContent = eur(a + (b - a) * e);
+        if (k < 1) frame = requestAnimationFrame(step);
+      };
+      frame = requestAnimationFrame(step);
+    };
+
+    const set = (state: 'before' | 'after') => {
+      if (root.dataset.state === state) return;
+      root.dataset.state = state;
+      count(state === 'after' ? from : to, state === 'after' ? to : from);
+    };
+
+    const play = (delay: number) => {
+      clearTimeout(timer);
+      timer = window.setTimeout(() => set('after'), delay);
+    };
+
+    root.querySelector('[data-replay]')!.addEventListener('click', () => {
+      set('before');
+      play(1100);
+    });
+
+    if (still || !('IntersectionObserver' in window)) return set('after');
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0].isIntersecting) return;
+        play(1200);
+        observer.disconnect();
+      },
+      { threshold: 0.6 },
+    );
+    observer.observe(root.querySelector('.swap__bill')!);
+  });
+</script>
+
+<style>
+  .swap {
+    --cream: #fffdfb;
+    --ink: #4a4442;
+    --muted: #a39894;
+    --glow: #e16d3e;
+    --terra: #cd6338;
+    --leaf: #5da74e;
+    --sky: #3db2e1;
+    margin: 0;
+    display: grid;
+    gap: var(--space-8);
+    align-items: center;
+  }
+
+  .swap__phone {
+    position: relative;
+    width: min(70%, 15rem);
+    justify-self: center;
+  }
+
+  /* brilho quente atrás do iPhone, como no poster */
+  .swap__phone::before {
+    content: '';
+    position: absolute;
+    inset: 10% -25%;
+    z-index: -1;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgb(249 200 169 / 0.22), transparent);
+    filter: blur(10px);
+  }
+
+  .swap__phone :global(.iphone__screen) {
+    background: #fff;
+  }
+
+  .swap__screen {
+    position: absolute;
+    inset: 0;
+    transition: opacity 0.7s ease;
+  }
+
+  .swap__screen--after,
+  .swap[data-state='after'] .swap__screen--before {
+    opacity: 0;
+  }
+
+  .swap[data-state='after'] .swap__screen--after {
+    opacity: 1;
+  }
+
+  .swap__bill {
+    position: relative;
+    display: grid;
+    gap: var(--space-4);
+    padding: var(--space-6);
+    border-radius: var(--radius-card);
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'Nunito', var(--font-body);
+    box-shadow: 0 2rem 4rem -2rem rgb(0 0 0 / 0.7);
+  }
+
+  .swap__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--space-4);
+  }
+
+  .swap__title {
+    font-family: 'Plus Jakarta Sans', var(--font-display);
+    font-weight: 700;
+    font-size: var(--text-title);
+    color: #5f2e1a;
+  }
+
+  .swap__budget {
+    color: var(--muted);
+    font-size: var(--text-sm);
+  }
+
+  .swap__budget strong {
+    color: var(--ink);
+    font-size: var(--text-base);
+  }
+
+  .swap__items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+  }
+
+  .swap__item {
+    position: relative;
+    display: grid;
+    grid-template-columns: 3.25rem 1fr auto;
+    gap: var(--space-4);
+    align-items: center;
+    padding-block: var(--space-3);
+    border-bottom: 1px solid #f1e6e1;
+  }
+
+  .swap__thumb {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 3.25rem;
+    aspect-ratio: 1;
+    border-radius: 14px;
+    background: #fcf2ee;
+    overflow: hidden;
+  }
+
+  .swap__img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border: 0;
+    border-radius: 0;
+    transition:
+      opacity 0.5s ease,
+      scale 0.7s var(--ease-settle);
+  }
+
+  .swap__dot {
+    width: 0.5rem;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--leaf);
+  }
+
+  .swap__name {
+    display: grid;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+
+  .swap__name small {
+    font-weight: 400;
+    color: var(--muted);
+    font-size: var(--text-sm);
+  }
+
+  .swap__price {
+    display: grid;
+    justify-items: end;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Linha que troca: o antigo e o novo ocupam o mesmo sítio */
+  .swap__item--swap .swap__name,
+  .swap__item--swap .swap__price {
+    grid-template-areas: 'v' 's';
+  }
+
+  .swap__item--swap .swap__old,
+  .swap__item--swap .swap__new {
+    grid-area: v;
+    transition:
+      opacity 0.45s ease,
+      translate 0.6s var(--ease-out);
+  }
+
+  .swap__item--swap small {
+    grid-area: s;
+  }
+
+  .swap__item--swap .swap__price .swap__old {
+    color: var(--terra);
+  }
+
+  .swap__new {
+    opacity: 0;
+    translate: 0 0.6rem;
+  }
+
+  .swap[data-state='after'] .swap__item--swap .swap__old,
+  .swap[data-state='after'] .swap__status .swap__old {
+    opacity: 0;
+    translate: 0 -0.6rem;
+  }
+
+  .swap[data-state='after'] .swap__new {
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  .swap__img--new {
+    opacity: 0;
+    scale: 0.85;
+  }
+
+  .swap[data-state='after'] .swap__img--old {
+    opacity: 0;
+    scale: 1.1;
+  }
+
+  .swap[data-state='after'] .swap__img--new {
+    opacity: 1;
+    scale: 1;
+  }
+
+  .swap__badge {
+    position: absolute;
+    right: 0;
+    top: -0.35rem;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    background: #66b856;
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 800;
+    opacity: 0;
+    scale: 0.6;
+    transition:
+      opacity 0.3s ease 0.35s,
+      scale 0.5s var(--ease-settle) 0.35s;
+  }
+
+  .swap[data-state='after'] .swap__badge {
+    opacity: 1;
+    scale: 1;
+  }
+
+  .swap__total {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-weight: 800;
+    font-size: var(--text-lg);
+  }
+
+  .swap__total strong {
+    font-size: var(--text-title);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .swap__meter {
+    position: relative;
+    height: 0.6rem;
+    border-radius: 999px;
+    background: #f1e6e1;
+  }
+
+  .swap__fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: var(--fill-before);
+    border-radius: inherit;
+    background: var(--terra);
+    transition:
+      width 0.9s var(--ease-out),
+      background-color 0.6s ease;
+  }
+
+  .swap[data-state='after'] .swap__fill {
+    width: var(--fill-after);
+    background: var(--glow);
+  }
+
+  /* marca do orçamento na barra */
+  .swap__limit {
+    position: absolute;
+    left: var(--budget);
+    top: -0.35rem;
+    bottom: -0.35rem;
+    width: 2px;
+    border-radius: 2px;
+    background: var(--ink);
+  }
+
+  .swap__status {
+    display: grid;
+    font-size: var(--text-sm);
+    font-weight: 700;
+  }
+
+  .swap__status > span {
+    grid-area: 1 / 1;
+    transition:
+      opacity 0.45s ease,
+      translate 0.6s var(--ease-out);
+  }
+
+  .swap__status .swap__old {
+    color: var(--terra);
+  }
+
+  .swap__status .swap__new {
+    color: var(--leaf);
+  }
+
+  .swap__replay {
+    justify-self: start;
+    padding: var(--space-1) 0;
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-size: var(--text-sm);
+    cursor: pointer;
+  }
+
+  .swap__replay:hover,
+  .swap__replay:focus-visible {
+    color: var(--terra);
+  }
+
+  .swap figcaption {
+    text-align: center;
+    margin-inline: auto;
+  }
+
+  @media (min-width: 56rem) {
+    .swap {
+      grid-template-columns: minmax(0, 17rem) minmax(0, 27rem);
+      justify-content: center;
+      column-gap: var(--space-16);
+    }
+
+    .swap__phone {
+      width: 100%;
+    }
+
+    .swap figcaption {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .swap * {
+      transition: none !important;
+    }
+  }
+</style>

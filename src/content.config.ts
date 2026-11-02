@@ -62,7 +62,44 @@ const projects = defineCollection({
       z.object({
         type: z.literal('features'),
         phone: z.object({ src: image(), alt: z.string() }),
-        items: z.array(z.object({ icon: z.enum(['calendar', 'syringe', 'share']), title: z.string(), text: z.string() })),
+        items: z.array(z.object({ icon: z.enum(['calendar', 'syringe', 'share', 'bag', 'wallet', 'folder']), title: z.string(), text: z.string() })),
+        // framed: põe o ecrã numa moldura de iPhone em CSS (para ecrãs sem mockup)
+        framed: z.boolean().default(false),
+        tone: z.enum(['blue', 'peach']).default('blue'),
+        note: z.string().optional(),
+      }),
+      // Frases grandes que acendem uma a uma com o scroll (ex.: o slogan do projeto)
+      z.object({
+        type: z.literal('manifesto'),
+        eyebrow: z.string().optional(),
+        lines: z.array(z.object({ word: z.string(), text: z.string() })),
+        note: z.string().optional(),
+      }),
+      // Troca de um produto: o total desce para dentro do orçamento quando entra no ecrã
+      z.object({
+        type: z.literal('swap'),
+        budget: z.number(),
+        before: shot,
+        after: shot,
+        items: z.array(
+          z.object({
+            name: z.string(),
+            store: z.string().optional(),
+            price: z.number(),
+            image: image().optional(),
+            swap: z.object({ name: z.string(), price: z.number(), image: image().optional() }).optional(),
+          }),
+        ),
+        caption: z.string().optional(),
+        note: z.string().optional(),
+      }),
+      // Wireframe vs ecrã final, com uma barra para arrastar
+      z.object({
+        type: z.literal('compare'),
+        eyebrow: z.string().optional(),
+        title: z.string(),
+        lede: z.string().optional(),
+        pairs: z.array(z.object({ label: z.string(), wire: shot, final: shot })),
         note: z.string().optional(),
       }),
       // Passos numerados

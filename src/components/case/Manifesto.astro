@@ -1,0 +1,142 @@
+---
+// Frases grandes, uma por linha (ex.: "Imagine it. Style it. Shop it.").
+// Começam apagadas e acendem uma a uma à medida que passam o meio do ecrã,
+// com um brilho suave. Ficam acesas depois de passar.
+interface Props {
+  eyebrow?: string;
+  lines: { word: string; text: string }[];
+  note?: string;
+}
+const { eyebrow, lines, note } = Astro.props;
+---
+
+<section class="manifesto" data-manifesto data-fred-section={eyebrow ?? lines[0]?.word} data-fred-note={note}>
+  {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+  <ol class="manifesto__lines">
+    {
+      lines.map((l, i) => (
+        <li class="manifesto__line" data-line={i}>
+          <span class="manifesto__num" aria-hidden="true">
+            0{i + 1}
+          </span>
+          <span class="manifesto__word">{l.word}</span>
+          <span class="manifesto__text">{l.text}</span>
+        </li>
+      ))
+    }
+  </ol>
+</section>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-manifesto]').forEach((root) => {
+    const lines = [...root.querySelectorAll<HTMLElement>('[data-line]')];
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (still || !('IntersectionObserver' in window)) {
+      lines.forEach((l) => l.classList.add('is-lit'));
+      return;
+    }
+    root.classList.add('is-armed');
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const i = Number((entry.target as HTMLElement).dataset.line);
+          // acende esta linha e as anteriores (se alguém fizer scroll rápido)
+          lines.forEach((l, k) => k <= i && l.classList.add('is-lit'));
+          observer.unobserve(entry.target);
+        }
+      },
+      { rootMargin: '-38% 0px -38% 0px' },
+    );
+    lines.forEach((l) => observer.observe(l));
+  });
+</script>
+
+<style>
+  .manifesto {
+    --cream: #fff9e2;
+    --glow: #f9c8a9;
+    position: relative;
+    display: grid;
+    gap: var(--space-8);
+    padding-block: var(--space-8);
+  }
+
+  .manifesto__lines {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--space-6);
+  }
+
+  .manifesto__line {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: var(--space-4);
+    row-gap: var(--space-2);
+    align-items: baseline;
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--color-line);
+  }
+
+  .manifesto__num {
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+    font-variant-numeric: tabular-nums;
+    transition: color 0.8s ease;
+  }
+
+  .manifesto__word {
+    font-family: 'Nunito', var(--font-display);
+    font-weight: 800;
+    font-size: clamp(3.25rem, 1.2rem + 9vw, 9.5rem);
+    line-height: 0.95;
+    letter-spacing: -0.035em;
+    color: var(--cream);
+    text-shadow: 0 0 0.45em rgb(249 200 169 / 0.35);
+    transition:
+      color 0.9s ease,
+      text-shadow 1.2s ease,
+      translate 0.9s var(--ease-settle);
+  }
+
+  .manifesto__text {
+    grid-column: 2;
+    max-width: 30ch;
+    font-size: var(--text-lg);
+    color: var(--color-text-2);
+    transition:
+      opacity 0.8s ease 0.15s,
+      translate 0.8s var(--ease-out) 0.15s;
+  }
+
+  /* Antes de acender: palavra apagada, sem brilho, texto escondido */
+  .manifesto.is-armed .manifesto__line:not(.is-lit) .manifesto__word {
+    color: rgb(255 249 226 / 0.12);
+    text-shadow: none;
+    translate: 0 0.08em;
+  }
+
+  .manifesto.is-armed .manifesto__line:not(.is-lit) .manifesto__text {
+    opacity: 0;
+    translate: 0 0.5rem;
+  }
+
+  .manifesto__line.is-lit .manifesto__num {
+    color: var(--glow);
+  }
+
+  @media (min-width: 56rem) {
+    .manifesto__line {
+      grid-template-columns: 3rem minmax(0, 1fr) minmax(0, 18rem);
+      column-gap: var(--space-8);
+    }
+
+    .manifesto__text {
+      grid-column: 3;
+      align-self: end;
+      padding-bottom: 0.9em;
+    }
+  }
+</style>

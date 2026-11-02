@@ -1,0 +1,311 @@
+---
+// Wireframe vs ecrã final dentro do mesmo iPhone. Uma barra divide os dois
+// e pode ser arrastada (ou mexida com o teclado). Ao entrar no ecrã a barra
+// assenta a meio sozinha. Os separadores escolhem qual ecrã comparar.
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import PhoneFrame from './PhoneFrame.astro';
+
+interface Shot {
+  src: ImageMetadata;
+  alt: string;
+}
+interface Props {
+  eyebrow?: string;
+  title: string;
+  lede?: string;
+  pairs: { label: string; wire: Shot; final: Shot }[];
+  note?: string;
+}
+const { eyebrow, title, lede, pairs, note } = Astro.props;
+---
+
+<section class="compare" data-compare data-fred-section={eyebrow ?? title} data-fred-note={note}>
+  <header class="compare__head" data-reveal>
+    {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+    <h2>{title}</h2>
+    {lede && <p class="compare__lede">{lede}</p>}
+  </header>
+
+  <div class="compare__body" data-reveal>
+    <div class="compare__tabs" role="tablist" aria-label="Screen to compare">
+      {
+        pairs.map((p, i) => (
+          <button class:list={['compare__tab', { 'is-active': i === 0 }]} type="button" role="tab" aria-selected={i === 0 ? 'true' : 'false'} data-tab={i}>
+            {p.label}
+          </button>
+        ))
+      }
+    </div>
+
+    <div class="compare__stage">
+      <span class="compare__side compare__side--wire" aria-hidden="true">Wireframe</span>
+      <div class="compare__phone" style="--pos:92%">
+        <PhoneFrame>
+          {
+            pairs.map((p, i) => (
+              <div class:list={['compare__pair', { 'is-active': i === 0 }]} data-pair={i}>
+                <Image class="compare__final" src={p.final.src} alt={p.final.alt} widths={[400, 804]} quality={92} sizes="(min-width: 56rem) 19rem, 70vw" loading="lazy" />
+                <Image class="compare__wire" src={p.wire.src} alt={p.wire.alt} widths={[400, 804]} quality={92} sizes="(min-width: 56rem) 19rem, 70vw" loading="lazy" />
+              </div>
+            ))
+          }
+          <span class="compare__handle" aria-hidden="true">
+            <span class="compare__knob">
+              <svg viewBox="0 0 24 24"><path d="m9 7-5 5 5 5M15 7l5 5-5 5" /></svg>
+            </span>
+          </span>
+          <input class="compare__range" type="range" min="0" max="100" value="92" aria-label="Drag to compare the wireframe with the final screen" data-range />
+        </PhoneFrame>
+      </div>
+      <span class="compare__side compare__side--final" aria-hidden="true">Final</span>
+    </div>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-compare]').forEach((root) => {
+    const phone = root.querySelector<HTMLElement>('.compare__phone')!;
+    const range = root.querySelector<HTMLInputElement>('[data-range]')!;
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    const pairs = [...root.querySelectorAll<HTMLElement>('[data-pair]')];
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let frame = 0;
+
+    const setPos = (v: number) => {
+      phone.style.setProperty('--pos', `${v}%`);
+      range.value = String(v);
+    };
+
+    // a barra desliza e assenta num sítio
+    const glide = (from: number, to: number, ms = 1100) => {
+      cancelAnimationFrame(frame);
+      if (still) return setPos(to);
+      const t0 = performance.now();
+      const step = (t: number) => {
+        const k = Math.min(1, (t - t0) / ms);
+        const e = 1 - Math.pow(1 - k, 4);
+        setPos(from + (to - from) * e);
+        if (k < 1) frame = requestAnimationFrame(step);
+      };
+      frame = requestAnimationFrame(step);
+    };
+
+    range.addEventListener('input', () => {
+      cancelAnimationFrame(frame);
+      setPos(Number(range.value));
+    });
+
+    tabs.forEach((tab, i) =>
+      tab.addEventListener('click', () => {
+        tabs.forEach((t, k) => {
+          t.classList.toggle('is-active', k === i);
+          t.setAttribute('aria-selected', k === i ? 'true' : 'false');
+        });
+        pairs.forEach((p, k) => p.classList.toggle('is-active', k === i));
+        glide(Number(range.value), 50, 700);
+      }),
+    );
+
+    if (!('IntersectionObserver' in window)) return setPos(50);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0].isIntersecting) return;
+        setTimeout(() => glide(92, 50), 500);
+        observer.disconnect();
+      },
+      { threshold: 0.55 },
+    );
+    observer.observe(phone);
+  });
+</script>
+
+<style>
+  .compare {
+    display: grid;
+    gap: var(--space-12);
+  }
+
+  .compare__lede {
+    max-width: 58ch;
+    margin-top: var(--space-4);
+    font-size: var(--text-lg);
+    color: var(--color-text-2);
+  }
+
+  .compare__body {
+    display: grid;
+    gap: var(--space-8);
+    justify-items: center;
+  }
+
+  .compare__tabs {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-2);
+  }
+
+  .compare__tab {
+    padding: var(--space-2) var(--space-4);
+    border: 1px solid var(--color-line-strong);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--color-text-2);
+    font: inherit;
+    cursor: pointer;
+    transition:
+      background-color var(--dur-fast) ease,
+      color var(--dur-fast) ease,
+      border-color var(--dur-fast) ease;
+  }
+
+  .compare__tab:hover {
+    color: var(--color-text);
+  }
+
+  .compare__tab.is-active {
+    background: #f6d2c3;
+    border-color: #f6d2c3;
+    color: #5f2e1a;
+  }
+
+  .compare__stage {
+    display: grid;
+    grid-template-columns: 1fr minmax(0, 19rem) 1fr;
+    align-items: center;
+    gap: var(--space-4);
+    width: 100%;
+  }
+
+  .compare__side {
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .compare__side--wire {
+    justify-self: end;
+  }
+
+  .compare__phone {
+    position: relative;
+    width: 100%;
+  }
+
+  .compare__phone::before {
+    content: '';
+    position: absolute;
+    inset: 8% -30%;
+    z-index: -1;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgb(249 200 169 / 0.18), transparent);
+    filter: blur(12px);
+  }
+
+  .compare__phone :global(.iphone__screen) {
+    background: #fff;
+    touch-action: pan-y;
+  }
+
+  .compare__pair {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+
+  .compare__pair.is-active {
+    opacity: 1;
+  }
+
+  .compare__pair :global(img) {
+    position: absolute;
+    inset: 0;
+  }
+
+  /* o wireframe fica à esquerda da barra */
+  .compare__pair :global(.compare__wire) {
+    clip-path: inset(0 calc(100% - var(--pos)) 0 0);
+  }
+
+  .compare__handle {
+    position: absolute;
+    z-index: 3;
+    top: 0;
+    bottom: 0;
+    left: var(--pos);
+    width: 2px;
+    translate: -50% 0;
+    background: #fff;
+    box-shadow: 0 0 0 1px rgb(95 46 26 / 0.25);
+    pointer-events: none;
+  }
+
+  .compare__knob {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    aspect-ratio: 1;
+    translate: -50% -50%;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0.5rem 1.25rem rgb(0 0 0 / 0.3);
+  }
+
+  .compare__knob svg {
+    width: 1.2rem;
+    fill: none;
+    stroke: #cd6338;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* o input fica por cima de tudo, invisível, para arrastar e para o teclado */
+  .compare__range {
+    position: absolute;
+    z-index: 4;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: ew-resize;
+    touch-action: pan-y;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .compare__range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 3rem;
+    height: 100vh;
+  }
+
+  .compare__range::-moz-range-thumb {
+    width: 3rem;
+    height: 100vh;
+    border: 0;
+  }
+
+  .compare__phone:has(.compare__range:focus-visible) .compare__knob {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+  }
+
+  @media (max-width: 40rem) {
+    .compare__stage {
+      grid-template-columns: minmax(0, 17rem);
+      justify-content: center;
+    }
+
+    .compare__side {
+      display: none;
+    }
+  }
+</style>

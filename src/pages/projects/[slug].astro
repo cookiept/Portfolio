@@ -8,6 +8,9 @@ import '@fontsource/eb-garamond/400-italic.css';
 import '@fontsource/space-grotesk/300.css';
 import '@fontsource/quicksand/700.css';
 import '@fontsource/nunito/400.css';
+import '@fontsource/nunito/600.css';
+import '@fontsource/nunito/800.css';
+import '@fontsource/plus-jakarta-sans/700.css';
 import BaseLayout from '@layouts/BaseLayout.astro';
 import Nav from '@components/ui/Nav.astro';
 import Footer from '@components/ui/Footer.astro';
@@ -15,6 +18,9 @@ import Scrolly from '@components/case/Scrolly.astro';
 import Report from '@components/case/Report.astro';
 import Story from '@components/case/Story.astro';
 import Features from '@components/case/Features.astro';
+import Manifesto from '@components/case/Manifesto.astro';
+import Swap from '@components/case/Swap.astro';
+import Compare from '@components/case/Compare.astro';
 import { site } from '@data/site';
 import { withBase } from '../../utils/url';
 
@@ -127,7 +133,10 @@ const shotWidths = [600, 1000, 1512];
               );
             if (b.type === 'scrolly') return <Scrolly eyebrow={b.eyebrow} title={b.title} lede={b.lede} steps={b.steps} />;
             if (b.type === 'report') return <Report bridge={b.bridge} title={b.title} mockup={b.mockup} phone={b.phone} scores={b.scores} actions={b.actions} caption={b.caption} note={b.note} />;
-            if (b.type === 'features') return <Features phone={b.phone} items={b.items} note={b.note} />;
+            if (b.type === 'features') return <Features phone={b.phone} items={b.items} framed={b.framed} tone={b.tone} note={b.note} />;
+            if (b.type === 'manifesto') return <Manifesto eyebrow={b.eyebrow} lines={b.lines} note={b.note} />;
+            if (b.type === 'swap') return <Swap budget={b.budget} before={b.before} after={b.after} items={b.items} caption={b.caption} note={b.note} />;
+            if (b.type === 'compare') return <Compare eyebrow={b.eyebrow} title={b.title} lede={b.lede} pairs={b.pairs} note={b.note} />;
             if (b.type === 'story') return <Story steps={b.steps} result={b.result} bridge={b.bridge} note={b.note} />;
             if (b.type === 'steps')
               return (
