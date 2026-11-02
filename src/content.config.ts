@@ -95,6 +95,21 @@ const projects = defineCollection({
         caption: z.string().optional(),
         note: z.string().optional(),
       }),
+      // A divisão a montar-se: foto grande que ganha uma camada por passo
+      z.object({
+        type: z.literal('room'),
+        eyebrow: z.string().optional(),
+        title: z.string(),
+        lede: z.string().optional(),
+        photo: shot,
+        table: image(),
+        reference: image(),
+        area: z.string(),
+        keep: z.string(),
+        moods: z.array(z.string()),
+        budget: z.string(),
+        steps: z.array(z.object({ title: z.string(), text: z.string(), note: z.string().optional() })).length(6),
+      }),
       // Wireframe vs ecrã final, com uma barra para arrastar
       z.object({
         type: z.literal('compare'),

@@ -23,6 +23,7 @@ import Swap from '@components/case/Swap.astro';
 import Compare from '@components/case/Compare.astro';
 import Strip from '@components/case/Strip.astro';
 import Deck from '@components/case/Deck.astro';
+import Room from '@components/case/Room.astro';
 import { site } from '@data/site';
 import { withBase } from '../../utils/url';
 
@@ -133,6 +134,7 @@ const shotWidths = [600, 1000, 1512];
                   {b.caption && <figcaption>{b.caption}</figcaption>}
                 </figure>
               );
+            if (b.type === 'room') return <Room eyebrow={b.eyebrow} title={b.title} lede={b.lede} photo={b.photo} table={b.table} reference={b.reference} area={b.area} keep={b.keep} moods={b.moods} budget={b.budget} steps={b.steps} />;
             if (b.type === 'scrolly' && b.layout === 'deck') return <Deck device={device} eyebrow={b.eyebrow} title={b.title} lede={b.lede} steps={b.steps} />;
             if (b.type === 'scrolly' && b.layout === 'strip') return <Strip device={device} eyebrow={b.eyebrow} title={b.title} lede={b.lede} steps={b.steps} />;
             if (b.type === 'scrolly') return <Scrolly device={device} eyebrow={b.eyebrow} title={b.title} lede={b.lede} steps={b.steps} />;

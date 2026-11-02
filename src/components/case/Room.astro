@@ -1,0 +1,660 @@
+---
+// A cozinha a montar-se: uma foto grande da divisão fica presa no ecrã e,
+// a cada passo do scroll, ganha uma camada por cima (a grelha do scan, a
+// etiqueta Keep, os chips do estilo, a referência, o orçamento e, no fim,
+// o brilho de "a gerar"). O texto do passo aparece ao lado.
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+interface Props {
+  eyebrow?: string;
+  title: string;
+  lede?: string;
+  photo: { src: ImageMetadata; alt: string };
+  table: ImageMetadata;
+  reference: ImageMetadata;
+  area: string;
+  keep: string;
+  moods: string[];
+  budget: string;
+  steps: { title: string; text: string; note?: string }[];
+}
+const { eyebrow, title, lede, photo, table, reference, area, keep, moods, budget, steps } = Astro.props;
+const checks = ['Room scan processed', 'Style profile created', 'Furniture sourced', 'Design render ready'];
+---
+
+<section class="room" data-room data-fred-section={eyebrow ?? title} style={`--n:${steps.length}`}>
+  <header class="room__head" data-reveal>
+    {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+    <h2>{title}</h2>
+    {lede && <p class="room__lede">{lede}</p>}
+  </header>
+
+  <div class="room__run">
+    <div class="room__pin">
+      <ol class="room__steps">
+        {
+          steps.map((s, i) => (
+            <li class:list={['room__step', { 'is-active': i === 0 }]} data-step={i} data-fred-note={s.note}>
+              <span class="room__num">
+                {String(i + 1).padStart(2, '0')}
+                <span> / {String(steps.length).padStart(2, '0')}</span>
+              </span>
+              <h3>{s.title}</h3>
+              <p>{s.text}</p>
+            </li>
+          ))
+        }
+      </ol>
+
+      <div class="room__stage" data-level="0">
+        <Image class="room__photo" src={photo.src} alt={photo.alt} widths={[800, 1190]} quality={90} sizes="(min-width: 56rem) 46rem, 100vw" />
+
+        <!-- 1 · scan: grelha em perspetiva, cantos e área -->
+        <div class="layer layer--scan" aria-hidden="true">
+          <svg class="scan__grid" viewBox="0 0 300 200" preserveAspectRatio="none">
+            <path d="M0 150 L300 150 M0 162 L300 162 M0 176 L300 176 M0 192 L300 192" />
+            <path d="M150 140 L150 200 M110 140 L60 200 M190 140 L240 200 M70 140 L-30 200 M230 140 L330 200" />
+            <path class="scan__box" d="M70 40 L230 40 L230 140 L70 140 Z" />
+          </svg>
+          <span class="scan__corner scan__corner--tl"></span>
+          <span class="scan__corner scan__corner--tr"></span>
+          <span class="scan__corner scan__corner--bl"></span>
+          <span class="scan__corner scan__corner--br"></span>
+          <span class="pill pill--dark scan__pill"><i class="dot dot--sky"></i>{area} · 3D canvas built</span>
+        </div>
+
+        <!-- 2 · keep: etiqueta presa à mesa -->
+        <div class="layer layer--keep" aria-hidden="true">
+          <span class="keep">
+            <Image class="keep__img" src={table} alt="" widths={[184]} quality={92} />
+            <span class="keep__text"><strong>{keep}</strong><small>Keep as-is</small></span>
+            <span class="keep__check">✓</span>
+          </span>
+          <span class="keep__pin"></span>
+        </div>
+
+        <!-- 3 · mood: chips e a foto fica mais clara -->
+        <div class="layer layer--mood" aria-hidden="true">
+          {moods.map((m, i) => <span class="pill pill--sky mood__chip" style={`--i:${i}`}>{m}</span>)}
+        </div>
+
+        <!-- 4 · referência: polaroid inclinada -->
+        <div class="layer layer--ref" aria-hidden="true">
+          <span class="ref">
+            <Image class="ref__img" src={reference} alt="" widths={[432]} quality={92} />
+            <small>From your saves</small>
+          </span>
+        </div>
+
+        <!-- 5 · orçamento: etiqueta de preço -->
+        <div class="layer layer--budget" aria-hidden="true">
+          <span class="tag">
+            <small>Your budget</small>
+            <strong>{budget}</strong>
+          </span>
+        </div>
+
+        <!-- 6 · gerar: brilho a passar e lista a completar -->
+        <div class="layer layer--gen" aria-hidden="true">
+          <span class="gen__sweep"></span>
+          <ul class="gen__list">
+            {checks.map((c, i) => <li style={`--i:${i}`}><i>✓</i>{c}</li>)}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-room]').forEach((root) => {
+    const run = root.querySelector<HTMLElement>('.room__run')!;
+    const stage = root.querySelector<HTMLElement>('.room__stage')!;
+    const steps = [...root.querySelectorAll<HTMLElement>('[data-step]')];
+    const n = steps.length;
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let current = -1;
+    let raf = 0;
+
+    const show = (i: number) => {
+      if (i === current) return;
+      current = i;
+      stage.dataset.level = String(i + 1);
+      steps.forEach((s, k) => s.classList.toggle('is-active', k === i));
+    };
+
+    const update = () => {
+      raf = 0;
+      if (still.matches) return show(n - 1);
+      const r = run.getBoundingClientRect();
+      const k = Math.min(1, Math.max(0, -r.top / (r.height - window.innerHeight)));
+      show(Math.min(n - 1, Math.floor(k * n * 0.999)));
+    };
+    const ask = () => raf || (raf = requestAnimationFrame(update));
+    window.addEventListener('scroll', ask, { passive: true });
+    window.addEventListener('resize', ask);
+    update();
+  });
+</script>
+
+<style>
+  .room {
+    --sky: #3db2e1;
+    --sky-soft: #ecf7fc;
+    --glow: #e16d3e;
+    --cocoa: #5f2e1a;
+    --leaf: #66b856;
+    display: grid;
+    gap: var(--space-8);
+  }
+
+  .room__lede {
+    max-width: 58ch;
+    margin-top: var(--space-4);
+    font-size: var(--text-lg);
+    color: var(--color-text-2);
+  }
+
+  .room__run {
+    height: calc(100svh + var(--n) * 55svh);
+  }
+
+  .room__pin {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    display: grid;
+    grid-template-rows: auto auto;
+    align-content: center;
+    gap: var(--space-6);
+  }
+
+  /* Texto do passo: todos no mesmo sítio, só o ativo se vê */
+  .room__steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    order: 2;
+  }
+
+  .room__step {
+    grid-area: 1 / 1;
+    display: grid;
+    gap: var(--space-2);
+    align-content: start;
+    opacity: 0;
+    translate: 0 0.75rem;
+    transition:
+      opacity 0.35s ease,
+      translate 0.5s var(--ease-out);
+  }
+
+  .room__step.is-active {
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  .room__num {
+    font-size: var(--text-sm);
+    color: #f9c8a9;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .room__num span {
+    color: var(--color-muted);
+  }
+
+  .room__step h3 {
+    font-size: var(--text-title);
+  }
+
+  .room__step p {
+    max-width: 34ch;
+    color: var(--color-text-2);
+  }
+
+  /* A foto da cozinha */
+  .room__stage {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3 / 2;
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    isolation: isolate;
+    container-type: inline-size;
+    box-shadow: 0 2rem 4rem -2rem rgb(0 0 0 / 0.7);
+    font-family: 'Nunito', var(--font-body);
+  }
+
+  .room__stage :global(.room__photo) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border: 0;
+    border-radius: 0;
+    filter: brightness(0.78) saturate(0.9);
+    transition: filter 1.2s ease;
+  }
+
+  /* com o estilo "bright", a cozinha fica mais clara e quente */
+  .room__stage:is([data-level='3'], [data-level='4'], [data-level='5'], [data-level='6']) :global(.room__photo) {
+    filter: brightness(1.08) saturate(1.05) sepia(0.08);
+  }
+
+  .layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+
+  .room__stage[data-level='1'] .layer--scan,
+  .room__stage:is([data-level='2'], [data-level='3'], [data-level='4'], [data-level='5'], [data-level='6']) .layer--scan {
+    opacity: 1;
+  }
+
+  .room__stage:is([data-level='2'], [data-level='3'], [data-level='4'], [data-level='5'], [data-level='6']) .layer--keep,
+  .room__stage:is([data-level='3'], [data-level='4'], [data-level='5'], [data-level='6']) .layer--mood,
+  .room__stage:is([data-level='4'], [data-level='5'], [data-level='6']) .layer--ref,
+  .room__stage:is([data-level='5'], [data-level='6']) .layer--budget,
+  .room__stage[data-level='6'] .layer--gen {
+    opacity: 1;
+  }
+
+  /* depois do scan, a grelha fica só como sombra */
+  .room__stage:not([data-level='1']) .scan__grid,
+  .room__stage:not([data-level='1']) .scan__corner {
+    opacity: 0.25;
+  }
+
+  .pill {
+    position: absolute;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.45em 0.9em;
+    border-radius: 999px;
+    font-size: clamp(0.7rem, 2.2cqi, 0.95rem);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .pill--dark {
+    background: rgb(40 36 35 / 0.82);
+    color: #fff;
+    backdrop-filter: blur(6px);
+  }
+
+  .pill--sky {
+    background: var(--sky-soft);
+    color: #22627c;
+    box-shadow: 0 0.5rem 1.25rem rgb(0 0 0 / 0.25);
+  }
+
+  .dot {
+    width: 0.55em;
+    aspect-ratio: 1;
+    border-radius: 50%;
+  }
+
+  .dot--sky {
+    background: var(--sky);
+  }
+
+  /* scan */
+  .scan__grid {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    fill: none;
+    stroke: rgb(236 247 252 / 0.75);
+    stroke-width: 0.6;
+    vector-effect: non-scaling-stroke;
+    transition: opacity 0.6s ease;
+  }
+
+  .scan__grid path {
+    stroke-dasharray: 600;
+    stroke-dashoffset: 600;
+    transition: stroke-dashoffset 1.6s var(--ease-out);
+  }
+
+  .scan__box {
+    stroke: var(--sky);
+    stroke-width: 1.4;
+    stroke-dasharray: 4 4 !important;
+  }
+
+  .room__stage:not([data-level='0']) .scan__grid path {
+    stroke-dashoffset: 0;
+  }
+
+  .scan__corner {
+    position: absolute;
+    width: 7%;
+    aspect-ratio: 1;
+    border: 3px solid #fff;
+    transition: opacity 0.6s ease;
+  }
+
+  .scan__corner--tl {
+    left: 5%;
+    top: 7%;
+    border-right: 0;
+    border-bottom: 0;
+    border-top-left-radius: 8px;
+  }
+
+  .scan__corner--tr {
+    right: 5%;
+    top: 7%;
+    border-left: 0;
+    border-bottom: 0;
+    border-top-right-radius: 8px;
+  }
+
+  .scan__corner--bl {
+    left: 5%;
+    bottom: 7%;
+    border-right: 0;
+    border-top: 0;
+    border-bottom-left-radius: 8px;
+  }
+
+  .scan__corner--br {
+    right: 5%;
+    bottom: 7%;
+    border-left: 0;
+    border-top: 0;
+    border-bottom-right-radius: 8px;
+  }
+
+  .scan__pill {
+    left: 50%;
+    bottom: 8%;
+    translate: -50% 0;
+  }
+
+  /* keep: etiqueta com a mesa */
+  .keep {
+    position: absolute;
+    left: 6%;
+    top: 12%;
+    display: flex;
+    align-items: center;
+    gap: 0.6em;
+    padding: 0.5em 0.8em 0.5em 0.5em;
+    border-radius: 1em;
+    background: #f6d2c3;
+    border: 1.5px solid #e99a7a;
+    color: #4a4442;
+    font-size: clamp(0.7rem, 2.1cqi, 0.95rem);
+    box-shadow: 0 0.75rem 1.5rem rgb(0 0 0 / 0.3);
+    translate: 0 0.6rem;
+    transition: translate 0.6s var(--ease-settle);
+  }
+
+  .room__stage:is([data-level='2'], [data-level='3'], [data-level='4'], [data-level='5'], [data-level='6']) .keep {
+    translate: 0 0;
+  }
+
+  .keep :global(.keep__img) {
+    width: 2.6em;
+    height: 2.6em;
+    border-radius: 0.6em;
+    object-fit: cover;
+    background: #fff;
+    border: 0;
+  }
+
+  .keep__text {
+    display: grid;
+    line-height: 1.2;
+  }
+
+  .keep__text small {
+    color: var(--glow);
+    font-size: 0.85em;
+  }
+
+  .keep__check {
+    display: grid;
+    place-items: center;
+    width: 1.6em;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--glow);
+    color: #fff;
+    font-size: 0.85em;
+    font-weight: 800;
+  }
+
+  /* mood */
+  .mood__chip {
+    top: calc(36% + var(--i) * 10%);
+    right: 7%;
+    scale: 0.7;
+    transition: scale 0.6s var(--ease-settle) calc(var(--i) * 0.12s);
+  }
+
+  .room__stage:is([data-level='3'], [data-level='4'], [data-level='5'], [data-level='6']) .mood__chip {
+    scale: 1;
+  }
+
+  /* referência */
+  .ref {
+    position: absolute;
+    right: 6%;
+    top: 7%;
+    display: grid;
+    gap: 0.35em;
+    width: 22%;
+    padding: 0.45em 0.45em 0.55em;
+    border-radius: 0.6em;
+    background: #fff;
+    color: #8a827f;
+    font-size: clamp(0.6rem, 1.7cqi, 0.8rem);
+    font-weight: 700;
+    box-shadow: 0 1rem 2rem rgb(0 0 0 / 0.35);
+    rotate: 10deg;
+    translate: 20% -20%;
+    transition:
+      rotate 0.7s var(--ease-settle),
+      translate 0.7s var(--ease-settle);
+  }
+
+  .room__stage:is([data-level='4'], [data-level='5'], [data-level='6']) .ref {
+    rotate: 5deg;
+    translate: 0 0;
+  }
+
+  .ref :global(.ref__img) {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    border-radius: 0.35em;
+    border: 0;
+  }
+
+  /* orçamento: etiqueta de preço pendurada */
+  .tag {
+    position: absolute;
+    left: 7%;
+    bottom: 22%;
+    display: grid;
+    padding: 0.55em 1em 0.6em 1.4em;
+    border-radius: 0.4em 1em 1em 0.4em;
+    background: #fffdfb;
+    color: #4a4442;
+    font-size: clamp(0.75rem, 2.3cqi, 1rem);
+    box-shadow: 0 1rem 2rem rgb(0 0 0 / 0.35);
+    rotate: -8deg;
+    transform-origin: 0 50%;
+    transition: rotate 0.9s var(--ease-settle);
+  }
+
+  .tag::before {
+    content: '';
+    position: absolute;
+    left: 0.5em;
+    top: 50%;
+    width: 0.45em;
+    aspect-ratio: 1;
+    translate: 0 -50%;
+    border-radius: 50%;
+    background: #2a2524;
+  }
+
+  .room__stage:is([data-level='5'], [data-level='6']) .tag {
+    rotate: -3deg;
+  }
+
+  .tag small {
+    color: #a39894;
+    font-size: 0.7em;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .tag strong {
+    font-size: 1.9em;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  /* gerar */
+  .gen__sweep {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg, transparent 30%, rgb(249 200 169 / 0.45) 50%, transparent 70%);
+    translate: -100% 0;
+  }
+
+  .room__stage[data-level='6'] .gen__sweep {
+    animation: sweep 2.4s var(--ease-out) 0.2s 2;
+  }
+
+  @keyframes sweep {
+    to {
+      translate: 100% 0;
+    }
+  }
+
+  .gen__list {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    translate: -50% -50%;
+    list-style: none;
+    margin: 0;
+    padding: 0.9em 1.1em;
+    display: grid;
+    gap: 0.45em;
+    border-radius: 1em;
+    background: rgb(255 253 251 / 0.94);
+    color: #4a4442;
+    font-size: clamp(0.7rem, 2.1cqi, 0.95rem);
+    font-weight: 700;
+    box-shadow: 0 1.5rem 3rem rgb(0 0 0 / 0.4);
+  }
+
+  .gen__list li {
+    display: flex;
+    align-items: center;
+    gap: 0.55em;
+    opacity: 0.35;
+    transition: opacity 0.3s ease calc(0.4s + var(--i) * 0.45s);
+  }
+
+  .gen__list i {
+    display: grid;
+    place-items: center;
+    width: 1.5em;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: #e4d7d1;
+    color: #fff;
+    font-style: normal;
+    font-size: 0.8em;
+    transition: background-color 0.3s ease calc(0.4s + var(--i) * 0.45s);
+  }
+
+  .room__stage[data-level='6'] .gen__list li {
+    opacity: 1;
+  }
+
+  .room__stage[data-level='6'] .gen__list i {
+    background: var(--leaf);
+  }
+
+  .ref :global(.ref__img) {
+    height: auto;
+  }
+
+  /* Ecrã estreito: no último passo as etiquetas recolhem e fica só a lista */
+  @media (max-width: 40rem) {
+    .layer--keep,
+    .layer--mood,
+    .layer--ref,
+    .layer--budget {
+      transition: opacity 0.4s ease;
+    }
+
+    .room__stage[data-level='6'] :is(.layer--keep, .layer--mood, .layer--ref, .layer--budget) {
+      opacity: 0;
+    }
+
+    .mood__chip {
+      top: auto;
+      bottom: calc(22% + (1 - var(--i)) * 13%);
+    }
+  }
+
+  @media (min-width: 56rem) {
+    .room__pin {
+      grid-template-columns: minmax(0, 18rem) minmax(0, 1fr);
+      grid-template-rows: none;
+      align-items: center;
+      column-gap: var(--space-12);
+    }
+
+    .room__steps {
+      order: 0;
+    }
+
+    .room__stage {
+      width: auto;
+      max-width: 100%;
+      height: min(70svh, 34rem);
+      justify-self: end;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .room__run {
+      height: auto;
+    }
+
+    .room__pin {
+      position: static;
+      height: auto;
+    }
+
+    .room__step {
+      grid-area: auto;
+      opacity: 1;
+      translate: none;
+    }
+
+    .room * {
+      transition: none !important;
+      animation: none !important;
+    }
+  }
+</style>

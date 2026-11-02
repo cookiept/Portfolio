@@ -32,43 +32,33 @@ blocks:
         text: Describe a mood, add a reference, set a budget.
       - word: Shop it.
         text: Every piece in the render is real, one tap from your door.
-  - type: scrolly
-    layout: deck
+  - type: room
     eyebrow: How it works
     title: An old kitchen, a new plan
     lede: Meet Lucas. He wants a brighter kitchen, he's keeping his table, and he has €800.
+    photo:
+      src: ../../assets/projects/glowai/room-photo.jpg
+      alt: Lucas's kitchen as he photographs it, with beige cabinets, a granite counter and a steel sink
+    table: ../../assets/projects/glowai/room-table.jpg
+    reference: ../../assets/projects/glowai/room-reference.jpg
+    area: 12.4 m²
+    keep: SKÅLSTA Table
+    moods: [Modern, Bright]
+    budget: €800
     steps:
       - title: Map the room
         text: He pans the camera around. The AI measures the space and builds a 3D canvas, no tape measure needed.
-        image:
-          src: ../../assets/projects/glowai/scan-camera.jpg
-          alt: Camera view of a kitchen with scan corners and the hint to pan slowly around the room
       - title: Keep what you love
         text: The scan finds the furniture. Lucas keeps his table, and the new design is built around it.
         note: The table stays. Nobody touches the table.
-        image:
-          src: ../../assets/projects/glowai/keep-furniture.jpg
-          alt: Got furniture you're keeping, with the SKÅLSTA table marked to keep as-is
       - title: Describe the mood
         text: In his own words, or with a tap. Modern and bright.
-        image:
-          src: ../../assets/projects/glowai/describe.jpg
-          alt: Describe what you love, a text field with mood chips like Cozy, Warm, Bold and Minimal
       - title: Add a reference
         text: A photo from his saves shows the look he's after.
-        image:
-          src: ../../assets/projects/glowai/reference.jpg
-          alt: Pick a reference, with upload, From Saves and Discovery
       - title: Set a budget
-        text: €800, with three tiers to show what that money buys.
-        image:
-          src: ../../assets/projects/glowai/budget.jpg
-          alt: Let's set a budget, €800 on a slider with Essential, Enhanced and Premium tiers
+        text: €800, and the AI spreads it across the pieces.
       - title: Let the AI work
         text: Room, style, furniture, render. A short checklist shows what is happening.
-        image:
-          src: ../../assets/projects/glowai/generating.jpg
-          alt: Building your kitchen design, 18% complete, with room scan and style profile done
   - type: text
     eyebrow: In practice
     title: €45 over budget
