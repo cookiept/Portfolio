@@ -82,14 +82,32 @@ blocks:
         image:
           src: ../../assets/projects/petsight/story-photo.jpg
           alt: Camera framing the bottom of the cat's paw inside a circle guide
-    result:
-      title: A report that fits the worry
-      text: Redness, swelling and skin integrity get their own scores, with care steps like washing the paw and a cold compress.
-      image:
-        src: ../../assets/projects/petsight/paw-report.jpg
-        alt: Health summary with erythema intensity, edema estimation and surface integrity
-      mockup: ../../assets/projects/petsight/hand/phone-paw-report.webp
+  - type: report
     bridge: Two minutes later
+    title: A report that fits the worry
+    caption: Redness, swelling and skin integrity get their own scores, with care steps for the paw.
+    phone:
+      src: ../../assets/projects/petsight/paw-report.jpg
+      alt: Health summary with erythema intensity, edema estimation and surface integrity
+    mockup: ../../assets/projects/petsight/hand/phone-paw-report.webp
+    scores:
+      - label: Erythema intensity
+        value: 92
+        tone: good
+        text: Active redness, limited to the affected area.
+      - label: Edema estimation
+        value: 65
+        tone: warn
+        text: Moderate swelling, a local immune reaction.
+      - label: Surface integrity
+        value: 95
+        tone: good
+        text: Skin intact, no open wounds or cuts.
+    actions:
+      - priority: Medium priority
+        text: Gently wash the paw with lukewarm water and mild soap.
+      - priority: Medium priority
+        text: A cold compress on the paw for 5 to 10 minutes.
   - type: text
     eyebrow: Beyond one scan
     title: Health that adds up over time

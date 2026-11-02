@@ -8,6 +8,9 @@ import PhoneFrame from './PhoneFrame.astro';
 
 interface Props {
   phone: { src: ImageMetadata; alt: string };
+  // foto de um iPhone real com o ecrã já colado (opcional, em vez da moldura CSS)
+  mockup?: ImageMetadata;
+  title?: string;
   scores: { label: string; value: number; text: string; tone: 'good' | 'warn' }[];
   actions: { priority: string; text: string }[];
   caption?: string;
@@ -15,7 +18,7 @@ interface Props {
   bridge?: string;
   note?: string;
 }
-const { phone, scores, actions, caption, bridge, note } = Astro.props;
+const { phone, mockup, title, scores, actions, caption, bridge, note } = Astro.props;
 const R = 26;
 const C = 2 * Math.PI * R;
 ---
@@ -31,9 +34,15 @@ const C = 2 * Math.PI * R;
   <div class="report__stage">
     <span class="report__ring-bg" aria-hidden="true"></span>
     <div class="report__phone">
-      <PhoneFrame>
-        <Image src={phone.src} alt={phone.alt} widths={[393, 786]} quality={92} sizes="18rem" />
-      </PhoneFrame>
+      {
+        mockup ? (
+          <Image class="report__mockup" src={mockup} alt={phone.alt} widths={[400, 583]} quality={95} sizes="(min-width: 56rem) 17rem, 64vw" />
+        ) : (
+          <PhoneFrame>
+            <Image src={phone.src} alt={phone.alt} widths={[393, 786]} quality={92} sizes="18rem" />
+          </PhoneFrame>
+        )
+      }
     </div>
 
     {
@@ -76,7 +85,14 @@ const C = 2 * Math.PI * R;
       ))
     }
   </div>
-  {caption && <figcaption>{caption}</figcaption>}
+  {
+    (title || caption) && (
+      <figcaption>
+        {title && <h3>{title}</h3>}
+        {caption && <p>{caption}</p>}
+      </figcaption>
+    )
+  }
 </figure>
 
 <script>
@@ -148,8 +164,24 @@ const C = 2 * Math.PI * R;
   .report figcaption {
     max-width: 60ch;
     margin-inline: auto;
+    display: grid;
+    gap: var(--space-2);
     text-align: center;
     color: var(--color-text-2);
+  }
+
+  .report figcaption h3 {
+    font-size: var(--text-title);
+    color: var(--color-text);
+  }
+
+  .report__phone :global(.report__mockup) {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 0;
+    border-radius: 0;
+    filter: drop-shadow(0 1.5rem 2rem rgb(26 63 85 / 0.35));
   }
 
   .report__stage {
