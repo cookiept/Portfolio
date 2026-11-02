@@ -22,10 +22,11 @@ blocks:
     body:
       - Cats and dogs hide pain by instinct, so problems often show up late.
       - PetSight makes a quick filmed check-up part of the routine. The AI reads each species the way vets already do, and turns a short video into scores and an action plan.
+      - Below are the two ways in, a routine check-up and a specific worry, both followed with Bingo, a four-year-old cat.
   - type: scrolly
-    eyebrow: How it works
-    title: From setup to report, in one flow
-    lede: Set up once, film three short clips, get a report.
+    eyebrow: Use case 1 · Routine check-up
+    title: Bingo's first check-up
+    lede: No worry in mind, just a regular look. Set up once, film three short clips, get a report.
     steps:
       - title: Set up in a minute
         text: You and your pet, with only what the analysis needs.
@@ -58,12 +59,9 @@ blocks:
           src: ../../assets/projects/petsight/assistant.jpg
           alt: Health assistant chat opening with Bingo's report and action plan
         mockup: ../../assets/projects/petsight/hand/assistant.webp
-  - type: text
-    eyebrow: The result
-    title: A report you can act on
-    body:
-      - Three scores, each explained in plain words, and an action plan sorted by priority. Ready to share with the vet as a PDF.
   - type: report
+    bridge: The report, up close
+    caption: Three scores explained in plain words and an action plan sorted by priority, ready to share with the vet as a PDF.
     phone:
       src: ../../assets/projects/petsight/summary.jpg
       alt: Health summary with facial symmetry 92%, gait regularity 74% and range of motion 81%
@@ -87,14 +85,14 @@ blocks:
         text: Avoid jumping and high-impact running for the next 24 hours.
     note: 74% gait? Probably just a lazy Sunday.
   - type: text
-    eyebrow: Use case
+    eyebrow: Use case 2 · A specific worry
     title: When something looks wrong
     body:
-      - Not every check-up is routine. When the owner spots a red swelling on his cat's paw, PetSight swaps the video for a few quick questions and two photos.
+      - Weeks later, the owner spots a red swelling on Bingo's paw. This time PetSight starts from the worry, and swaps the videos for a few quick questions and two photos.
   - type: story
     steps:
       - title: Notice
-        text: The owner describes the worry in his own words.
+        text: The owner describes the worry in their own words.
         chips: [Limping, Lethargy, Scratching, Other]
         quote: I need to figure out what this red swelling on my cat's paw is.
       - title: Point

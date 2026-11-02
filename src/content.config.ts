@@ -33,6 +33,7 @@ const projects = defineCollection({
       z.object({
         type: z.literal('report'),
         phone: shot,
+        bridge: z.string().optional(),
         scores: z.array(z.object({ label: z.string(), value: z.number(), text: z.string(), tone: z.enum(['good', 'warn']) })),
         actions: z.array(z.object({ priority: z.string(), text: z.string() })),
         caption: z.string().optional(),

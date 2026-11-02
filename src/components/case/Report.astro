@@ -11,14 +11,23 @@ interface Props {
   scores: { label: string; value: number; text: string; tone: 'good' | 'warn' }[];
   actions: { priority: string; text: string }[];
   caption?: string;
+  // frase curta na linha tracejada que liga o passo anterior ao relatório
+  bridge?: string;
   note?: string;
 }
-const { phone, scores, actions, caption, note } = Astro.props;
+const { phone, scores, actions, caption, bridge, note } = Astro.props;
 const R = 26;
 const C = 2 * Math.PI * R;
 ---
 
 <figure class="report" data-report data-fred-note={note}>
+  {
+    bridge && (
+      <div class="report__bridge">
+        <span>{bridge}</span>
+      </div>
+    )
+  }
   <div class="report__stage">
     <span class="report__ring-bg" aria-hidden="true"></span>
     <div class="report__phone">
@@ -112,6 +121,28 @@ const C = 2 * Math.PI * R;
     --r-ocean: #2e7eb3;
     --r-sage: #98c788;
     --r-honey: #e4ac51;
+  }
+
+  .report__bridge {
+    display: grid;
+    justify-items: center;
+    margin-top: calc(-1 * var(--space-16));
+    padding-bottom: var(--space-4);
+  }
+
+  .report__bridge::before,
+  .report__bridge::after {
+    content: '';
+    height: var(--space-12);
+    border-left: 1px dashed var(--color-line-strong);
+  }
+
+  .report__bridge span {
+    padding: var(--space-2) var(--space-4);
+    border: 1px solid var(--color-line);
+    border-radius: 999px;
+    font-size: var(--text-sm);
+    color: var(--color-accent);
   }
 
   .report figcaption {
