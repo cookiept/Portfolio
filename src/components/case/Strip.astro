@@ -1,0 +1,232 @@
+---
+// Fita horizontal: no computador a secção fica presa enquanto se faz scroll
+// e os passos (um iPhone cada, com um número grande por trás) deslizam para
+// o lado. No telemóvel é uma fita normal que se arrasta com o dedo.
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import PhoneFrame from './PhoneFrame.astro';
+
+interface Step {
+  title: string;
+  text: string;
+  note?: string;
+  image: { src: ImageMetadata; alt: string };
+}
+interface Props {
+  device?: 'css' | 'iphone15';
+  eyebrow?: string;
+  title: string;
+  lede?: string;
+  steps: Step[];
+}
+const { eyebrow, title, lede, steps, device = 'css' } = Astro.props;
+---
+
+<section class="strip" data-strip data-fred-section={eyebrow ?? title} style={`--n:${steps.length}`}>
+  <div class="strip__pin">
+    <header class="strip__head">
+      {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+      <h2>{title}</h2>
+      {lede && <p class="strip__lede">{lede}</p>}
+    </header>
+
+    <div class="strip__viewport">
+      <ol class="strip__track" data-track>
+        {
+          steps.map((s, i) => (
+            <li class="strip__step" data-fred-note={s.note}>
+              <span class="strip__num" aria-hidden="true">
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              <div class="strip__phone">
+                <PhoneFrame device={device}>
+                  <Image src={s.image.src} alt={s.image.alt} widths={[400, 804]} quality={92} sizes="(min-width: 56rem) 15rem, 60vw" loading={i < 3 ? 'eager' : 'lazy'} />
+                </PhoneFrame>
+              </div>
+              <div class="strip__text">
+                <h3>{s.title}</h3>
+                <p>{s.text}</p>
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+
+    <div class="strip__progress" aria-hidden="true"><span></span></div>
+  </div>
+</section>
+
+<script>
+  // A fita anda para o lado à medida que a secção (alta) passa pelo ecrã
+  document.querySelectorAll<HTMLElement>('[data-strip]').forEach((root) => {
+    const track = root.querySelector<HTMLElement>('[data-track]')!;
+    const desk = window.matchMedia('(min-width: 56rem) and (prefers-reduced-motion: no-preference)');
+    let raf = 0;
+
+    const update = () => {
+      raf = 0;
+      if (!desk.matches) {
+        track.style.translate = '';
+        return;
+      }
+      const r = root.getBoundingClientRect();
+      const run = r.height - window.innerHeight;
+      const k = Math.min(1, Math.max(0, -r.top / run));
+      const vp = track.parentElement!;
+      const pad = parseFloat(getComputedStyle(vp).paddingLeft) || 0;
+      const max = Math.max(0, track.scrollWidth - (vp.clientWidth - 2 * pad));
+      track.style.translate = `${-k * max}px 0`;
+      root.style.setProperty('--k', String(k));
+    };
+    const ask = () => raf || (raf = requestAnimationFrame(update));
+    window.addEventListener('scroll', ask, { passive: true });
+    window.addEventListener('resize', ask);
+    desk.addEventListener('change', ask);
+    update();
+  });
+</script>
+
+<style>
+  .strip__head {
+    display: grid;
+  }
+
+  .strip__lede {
+    max-width: 58ch;
+    margin-top: var(--space-4);
+    font-size: var(--text-lg);
+    color: var(--color-text-2);
+  }
+
+  .strip__pin {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-8);
+  }
+
+  /* Telemóvel: fita normal com scroll horizontal */
+  .strip__viewport {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    margin-inline: calc(var(--gutter) * -1);
+    padding-inline: var(--gutter);
+    scrollbar-width: none;
+  }
+
+  .strip__track {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: min(72vw, 17rem);
+    gap: var(--space-6);
+  }
+
+  .strip__step {
+    position: relative;
+    display: grid;
+    gap: var(--space-6);
+    align-content: start;
+    padding-top: var(--space-8);
+    scroll-snap-align: start;
+  }
+
+  /* número enorme, só com contorno, atrás do iPhone */
+  .strip__num {
+    position: absolute;
+    z-index: 0;
+    top: -0.1em;
+    left: -0.06em;
+    font-family: 'Nunito', var(--font-display);
+    font-weight: 800;
+    font-size: clamp(7rem, 4rem + 9vw, 12rem);
+    line-height: 1;
+    letter-spacing: -0.05em;
+    color: transparent;
+    -webkit-text-stroke: 1.5px rgb(249 200 169 / 0.45);
+    pointer-events: none;
+  }
+
+  .strip__phone {
+    position: relative;
+    z-index: 1;
+    width: 78%;
+    margin-left: 18%;
+  }
+
+  .strip__text {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .strip__text h3 {
+    font-size: var(--text-title);
+  }
+
+  .strip__text p {
+    color: var(--color-text-2);
+  }
+
+  .strip__progress {
+    display: none;
+  }
+
+  /* Computador: a secção é alta e o conteúdo fica preso; a fita desliza */
+  @media (min-width: 56rem) and (prefers-reduced-motion: no-preference) {
+    .strip {
+      height: calc(100vh + var(--n) * 38vh);
+    }
+
+    .strip__pin {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      align-content: center;
+      gap: var(--space-8);
+    }
+
+    /* a fita sai da coluna e vai até às bordas da janela */
+    .strip__viewport {
+      overflow: visible;
+      margin-inline: calc(50% - 50vw);
+      padding-inline: calc(50vw - 50%);
+    }
+
+    .strip__track {
+      grid-auto-columns: 19rem;
+      gap: var(--space-16);
+      width: max-content;
+      will-change: translate;
+    }
+
+    .strip__step {
+      padding-top: clamp(3rem, 7vh, 5rem);
+    }
+
+    .strip__phone {
+      width: min(14rem, 25vh);
+      margin-left: 5.5rem;
+    }
+
+    .strip__progress {
+      display: block;
+      height: 2px;
+      max-width: 18rem;
+      border-radius: 2px;
+      background: var(--color-line-strong);
+      overflow: hidden;
+    }
+
+    .strip__progress span {
+      display: block;
+      height: 100%;
+      background: #f9c8a9;
+      transform-origin: left;
+      scale: var(--k, 0) 1;
+    }
+  }
+</style>

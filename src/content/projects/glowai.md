@@ -33,6 +33,7 @@ blocks:
       - word: Shop it.
         text: Every piece in the render is real, one tap from your door.
   - type: scrolly
+    layout: strip
     eyebrow: How it works
     title: An old kitchen, a new plan
     lede: Meet Lucas. He wants a brighter kitchen, he's keeping his table, and he has €800.

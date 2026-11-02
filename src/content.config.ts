@@ -24,6 +24,8 @@ const projects = defineCollection({
       // Um iPhone parado ao lado do texto; o ecrã muda a cada passo
       z.object({
         type: z.literal('scrolly'),
+        // timeline: iPhone parado ao lado dos passos; strip: fita horizontal
+        layout: z.enum(['timeline', 'strip']).default('timeline'),
         eyebrow: z.string().optional(),
         title: z.string(),
         lede: z.string().optional(),
