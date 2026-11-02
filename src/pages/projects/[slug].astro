@@ -280,7 +280,8 @@ const shotWidths = [600, 1000, 1512];
     margin-top: var(--space-12);
   }
 
-  .eyebrow {
+  /* globais dentro do case, para os blocos que são componentes (ex.: Scrolly) */
+  .case :global(.eyebrow) {
     font-size: var(--text-sm);
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -288,7 +289,7 @@ const shotWidths = [600, 1000, 1512];
     margin-bottom: var(--space-3);
   }
 
-  h2 {
+  .case :global(h2) {
     font-size: var(--text-h2);
     line-height: 1.05;
   }
