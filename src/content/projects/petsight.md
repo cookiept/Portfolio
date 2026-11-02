@@ -22,11 +22,10 @@ blocks:
     body:
       - Cats and dogs hide pain by instinct, so problems often show up late.
       - PetSight makes a quick filmed check-up part of the routine. The AI reads each species the way vets already do, and turns a short video into scores and an action plan.
-      - Below are the two ways in, a routine check-up and a specific worry, both followed with Bingo, a four-year-old cat.
   - type: scrolly
-    eyebrow: Use case 1 · Routine check-up
-    title: Bingo's first check-up
-    lede: No worry in mind, just a regular look. Set up once, film three short clips, get a report.
+    eyebrow: How it works
+    title: From setup to report, in one flow
+    lede: Set up once, film three short clips, get a report.
     steps:
       - title: Set up in a minute
         text: You and your pet, with only what the analysis needs.
@@ -59,36 +58,11 @@ blocks:
           src: ../../assets/projects/petsight/assistant.jpg
           alt: Health assistant chat opening with Bingo's report and action plan
         mockup: ../../assets/projects/petsight/hand/assistant.webp
-  - type: report
-    bridge: The report, up close
-    caption: Three scores explained in plain words and an action plan sorted by priority, ready to share with the vet as a PDF.
-    phone:
-      src: ../../assets/projects/petsight/summary.jpg
-      alt: Health summary with facial symmetry 92%, gait regularity 74% and range of motion 81%
-    scores:
-      - label: Facial symmetry
-        value: 92
-        tone: good
-        text: No visible asymmetry. Jaw and eye spacing within normal range.
-      - label: Gait regularity
-        value: 74
-        tone: warn
-        text: Minor irregularity in the left hind leg stride.
-      - label: Range of motion
-        value: 81
-        tone: good
-        text: Flexion and extension within normal bounds.
-    actions:
-      - priority: Medium priority
-        text: Record a new 30-second mobility video tomorrow morning.
-      - priority: Medium priority
-        text: Avoid jumping and high-impact running for the next 24 hours.
-    note: 74% gait? Probably just a lazy Sunday.
   - type: text
-    eyebrow: Use case 2 · A specific worry
-    title: When something looks wrong
+    eyebrow: In practice
+    title: A swollen paw, step by step
     body:
-      - Weeks later, the owner spots a red swelling on Bingo's paw. This time PetSight starts from the worry, and swaps the videos for a few quick questions and two photos.
+      - Bingo's owner spots a red swelling on his paw. PetSight starts from that worry, with a few quick questions and two photos.
   - type: story
     steps:
       - title: Notice
