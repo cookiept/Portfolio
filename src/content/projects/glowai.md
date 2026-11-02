@@ -4,6 +4,7 @@ summary: Photograph a room and see it redesigned with real furniture you can buy
 kind: app
 order: 3
 cover: ../../assets/projects/glowai.jpg
+device: iphone15
 facts:
   - label: My role
     value: To confirm

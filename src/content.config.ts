@@ -121,6 +121,8 @@ const projects = defineCollection({
       kind: z.enum(['app', 'web']), // define o tipo de imagem provisória
       order: z.number(),
       cover: image().optional(),
+      // Moldura dos iPhones no case study: CSS ou o mockup do iPhone 15 Pro
+      device: z.enum(['css', 'iphone15']).default('css'),
       // Projeto ainda sem informação: aparece como "em breve" e sem link
       placeholder: z.boolean().default(false),
       // Case study completo (opcional: sem isto a página mostra só o resumo)

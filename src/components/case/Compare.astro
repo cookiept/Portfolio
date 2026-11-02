@@ -11,13 +11,14 @@ interface Shot {
   alt: string;
 }
 interface Props {
+  device?: 'css' | 'iphone15';
   eyebrow?: string;
   title: string;
   lede?: string;
   pairs: { label: string; wire: Shot; final: Shot }[];
   note?: string;
 }
-const { eyebrow, title, lede, pairs, note } = Astro.props;
+const { eyebrow, title, lede, pairs, note, device = 'css' } = Astro.props;
 ---
 
 <section class="compare" data-compare data-fred-section={eyebrow ?? title} data-fred-note={note}>
@@ -41,7 +42,7 @@ const { eyebrow, title, lede, pairs, note } = Astro.props;
     <div class="compare__stage">
       <span class="compare__side compare__side--wire" aria-hidden="true">Wireframe</span>
       <div class="compare__phone" style="--pos:92%">
-        <PhoneFrame>
+        <PhoneFrame device={device}>
           {
             pairs.map((p, i) => (
               <div class:list={['compare__pair', { 'is-active': i === 0 }]} data-pair={i}>

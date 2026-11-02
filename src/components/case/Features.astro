@@ -6,6 +6,7 @@ import type { ImageMetadata } from 'astro';
 import PhoneFrame from './PhoneFrame.astro';
 
 interface Props {
+  device?: 'css' | 'iphone15';
   phone: { src: ImageMetadata; alt: string };
   items: { icon: 'calendar' | 'syringe' | 'share' | 'bag' | 'wallet' | 'folder'; title: string; text: string }[];
   // framed: o ecrã vai numa moldura de iPhone em CSS; tone: cor dos ícones
@@ -13,7 +14,7 @@ interface Props {
   tone?: 'blue' | 'peach';
   note?: string;
 }
-const { phone, items, framed = false, tone = 'blue', note } = Astro.props;
+const { phone, items, framed = false, tone = 'blue', note, device = 'css' } = Astro.props;
 
 const icons = {
   calendar: '<rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
@@ -29,7 +30,7 @@ const icons = {
   <div class="features__phone">
     {
       framed ? (
-        <PhoneFrame>
+        <PhoneFrame device={device}>
           <Image src={phone.src} alt={phone.alt} widths={[400, 804]} quality={92} sizes="(min-width: 56rem) 17rem, 60vw" />
         </PhoneFrame>
       ) : (

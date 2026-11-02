@@ -15,6 +15,7 @@ interface Item {
   swap?: { name: string; price: number; image?: ImageMetadata };
 }
 interface Props {
+  device?: 'css' | 'iphone15';
   budget: number;
   before: { src: ImageMetadata; alt: string };
   after: { src: ImageMetadata; alt: string };
@@ -22,7 +23,7 @@ interface Props {
   caption?: string;
   note?: string;
 }
-const { budget, before, after, items, caption, note } = Astro.props;
+const { budget, before, after, items, caption, note, device = 'css' } = Astro.props;
 
 const eur = (n: number) => `€${n.toLocaleString('en-GB')}`;
 const totalBefore = items.reduce((t, i) => t + i.price, 0);
@@ -42,7 +43,7 @@ const pct = (n: number) => `${((n / scale) * 100).toFixed(2)}%`;
   style={`--budget:${pct(budget)};--fill-before:${pct(totalBefore)};--fill-after:${pct(totalAfter)}`}
 >
   <div class="swap__phone">
-    <PhoneFrame>
+    <PhoneFrame device={device}>
       <Image class="swap__screen swap__screen--before" src={before.src} alt={before.alt} widths={[400, 804]} quality={92} sizes="(min-width: 56rem) 17rem, 60vw" />
       <Image class="swap__screen swap__screen--after" src={after.src} alt={after.alt} widths={[400, 804]} quality={92} sizes="(min-width: 56rem) 17rem, 60vw" />
     </PhoneFrame>

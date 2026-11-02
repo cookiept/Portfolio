@@ -16,12 +16,13 @@ interface Step {
   mockup?: ImageMetadata;
 }
 interface Props {
+  device?: 'css' | 'iphone15';
   eyebrow?: string;
   title: string;
   lede?: string;
   steps: Step[];
 }
-const { eyebrow, title, lede, steps } = Astro.props;
+const { eyebrow, title, lede, steps, device = 'css' } = Astro.props;
 const mockups = steps.every((s) => s.mockup);
 ---
 
@@ -45,7 +46,7 @@ const mockups = steps.every((s) => s.mockup);
             </h3>
             <p>{s.text}</p>
             <div class="scrolly__inline">
-              <PhoneFrame>
+              <PhoneFrame device={device}>
                 <Image src={s.image.src} alt={s.image.alt} widths={[393, 786]} quality={92} sizes="60vw" />
               </PhoneFrame>
             </div>
@@ -74,7 +75,7 @@ const mockups = steps.every((s) => s.mockup);
           ) : (
             <>
               <div class="scrolly__phone">
-                <PhoneFrame>
+                <PhoneFrame device={device}>
                   {steps.map((s, i) => (
                     <Image
                       class:list={['scrolly__screen', { 'is-active': i === 0 }]}

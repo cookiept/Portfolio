@@ -1,22 +1,39 @@
 ---
-// Moldura de iPhone em CSS (aro de titânio, ecrã com cantos redondos e
-// Dynamic Island). O ecrã vai no slot e enche o espaço 393x852.
+// Moldura de iPhone. Por omissão é feita em CSS (aro de titânio, ecrã com
+// cantos redondos e Dynamic Island). Com device="iphone15" usa a foto do
+// mockup do iPhone 15 Pro (com o ecrã recortado) por cima do ecrã.
+// O ecrã vai no slot e enche o espaço.
+import { Image } from 'astro:assets';
+import iphone15 from '../../assets/devices/iphone15.png';
+
 interface Props {
   class?: string;
+  device?: 'css' | 'iphone15';
 }
-const { class: className } = Astro.props;
+const { class: className, device = 'css' } = Astro.props;
 ---
 
-<div class:list={['iphone', className]}>
-  <span class="iphone__btn iphone__btn--action" aria-hidden="true"></span>
-  <span class="iphone__btn iphone__btn--up" aria-hidden="true"></span>
-  <span class="iphone__btn iphone__btn--down" aria-hidden="true"></span>
-  <span class="iphone__btn iphone__btn--power" aria-hidden="true"></span>
-  <div class="iphone__screen">
-    <slot />
-    <span class="iphone__island" aria-hidden="true"></span>
-  </div>
-</div>
+{
+  device === 'iphone15' ? (
+    <div class:list={['iphone15', className]}>
+      <div class="iphone__screen iphone15__screen">
+        <slot />
+      </div>
+      <Image class="iphone15__frame" src={iphone15} alt="" widths={[584]} quality={95} format="webp" />
+    </div>
+  ) : (
+    <div class:list={['iphone', className]}>
+      <span class="iphone__btn iphone__btn--action" aria-hidden="true" />
+      <span class="iphone__btn iphone__btn--up" aria-hidden="true" />
+      <span class="iphone__btn iphone__btn--down" aria-hidden="true" />
+      <span class="iphone__btn iphone__btn--power" aria-hidden="true" />
+      <div class="iphone__screen">
+        <slot />
+        <span class="iphone__island" aria-hidden="true" />
+      </div>
+    </div>
+  )
+}
 
 <style>
   .iphone {
@@ -93,5 +110,34 @@ const { class: className } = Astro.props;
     right: -0.6%;
     top: 28%;
     height: 11%;
+  }
+
+  /* Mockup do iPhone 15 Pro: o ecrã fica no buraco da foto (medidas da foto 584x1176) */
+  .iphone15 {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 584 / 1176;
+    filter: drop-shadow(0 2rem 2.5rem rgb(0 0 0 / 0.55));
+  }
+
+  .iphone15__screen {
+    position: absolute;
+    left: 5.9%;
+    top: 2.47%;
+    width: 88.53%;
+    height: 95.15%;
+    border-radius: 13.2% / 6.1%;
+    background: #fff;
+  }
+
+  .iphone15 > :global(.iphone15__frame) {
+    position: absolute;
+    z-index: 5;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    border-radius: 0;
+    pointer-events: none;
   }
 </style>
